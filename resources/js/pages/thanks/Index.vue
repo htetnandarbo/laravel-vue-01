@@ -45,14 +45,14 @@ const backToSpin = () => {
 <template>
     <Head title="Thanks for Shopping" />
 
-    <div class="min-h-screen bg-linear-to-b from-amber-100 via-orange-50 to-rose-50 px-4 py-6 sm:px-6 sm:py-10">
+    <div class="min-h-screen overflow-x-clip bg-linear-to-b from-amber-100 via-orange-50 to-rose-50 px-4 py-6 sm:px-6 sm:py-10">
         <div class="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-4xl items-center justify-center sm:min-h-[calc(100vh-5rem)]">
-            <div class="relative w-full max-w-2xl">
-                <div class="lucky-orb lucky-orb--one" />
+            <div class="relative w-full max-w-2xl overflow-x-clip">
+                <!-- <div class="lucky-orb lucky-orb--one" />
                 <div class="lucky-orb lucky-orb--two" />
-                <div class="lucky-orb lucky-orb--three" />
+                <div class="lucky-orb lucky-orb--three" /> -->
 
-                <Card class="relative overflow-hidden rounded-3xl border border-white/60 bg-white/85 shadow-xl shadow-orange-100/80 backdrop-blur">
+                <Card class="relative overflow-hidden rounded-3xl border border-white/60 bg-white/85 backdrop-blur">
                     <div class="absolute inset-x-0 top-0 h-1.5 bg-linear-to-r from-amber-400 via-orange-400 to-rose-400" />
 
                     <CardContent class="p-6 sm:p-8">
