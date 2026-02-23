@@ -21,6 +21,9 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
+    notifications: {
+        unread_count: number;
+    };
     sidebarOpen: boolean;
 };
 

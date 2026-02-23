@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { demo as spinDemo } from '@/routes/spin';
 import { Gift, Sparkles, Star } from 'lucide-vue-next';
 
 const isWishDialogOpen = ref(false);
+const isDesktop = ref(false);
 const wishText = ref('');
 const draftWish = ref('');
 
@@ -39,6 +40,19 @@ const nextStep = () => {
     if (!hasWish.value) return;
     router.visit(spinDemo());
 };
+
+const updateViewportMode = () => {
+    isDesktop.value = window.innerWidth >= 640;
+};
+
+onMounted(() => {
+    updateViewportMode();
+    window.addEventListener('resize', updateViewportMode);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('resize', updateViewportMode);
+});
 </script>
 
 <template>
@@ -85,8 +99,8 @@ const nextStep = () => {
                             </div>
                         </button>
 
-                        <Dialog v-model:open="isWishDialogOpen">
-                            <DialogContent class="hidden sm:block sm:max-w-lg">
+                        <Dialog v-if="isDesktop" v-model:open="isWishDialogOpen">
+                            <DialogContent class="sm:max-w-lg">
                                 <DialogHeader class="space-y-2">
                                     <DialogTitle class="flex items-center gap-2">
                                         <Sparkles class="size-4 text-amber-600" />
@@ -131,8 +145,8 @@ const nextStep = () => {
                             </DialogContent>
                         </Dialog>
 
-                        <Sheet v-model:open="isWishDialogOpen">
-                            <SheetContent side="top" class="rounded-b-3xl sm:hidden">
+                        <Sheet v-else v-model:open="isWishDialogOpen">
+                            <SheetContent side="top" class="rounded-b-3xl">
                                 <SheetHeader class="space-y-2 pr-8">
                                     <SheetTitle class="flex items-center gap-2">
                                         <Sparkles class="size-4 text-amber-600" />

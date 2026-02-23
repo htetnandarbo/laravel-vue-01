@@ -1,0 +1,6 @@
+
+Deprecated: PHP Startup: session.sid_length INI setting is deprecated in Unknown on line 0
+
+Deprecated: PHP Startup: session.sid_bits_per_character INI setting is deprecated in Unknown on line 0
+
+Parse error: syntax error, unexpected token "\", expecting ")" in Command line code on line 1

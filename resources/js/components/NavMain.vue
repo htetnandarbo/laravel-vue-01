@@ -29,6 +29,12 @@ const page = usePage();
                     <Link :href="dashboardMenuItem.href">
                         <component :is="dashboardMenuItem.icon" />
                         <span>{{ dashboardMenuItem.title }}</span>
+                        <span
+                            v-if="dashboardMenuItem.badge"
+                            class="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-semibold text-white"
+                        >
+                            {{ dashboardMenuItem.badge }}
+                        </span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
@@ -50,6 +56,12 @@ const page = usePage();
                                 <SidebarMenuSubButton as-child :is-active="urlIsActive(subItem.href, page.url)">
                                     <Link :href="subItem.href" preserve-scroll preserve-state>
                                         <span>{{ subItem.title }}</span>
+                                        <span
+                                            v-if="subItem.badge"
+                                            class="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-semibold text-white"
+                                        >
+                                            {{ subItem.badge }}
+                                        </span>
                                     </Link>
                                 </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
