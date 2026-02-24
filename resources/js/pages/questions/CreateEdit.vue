@@ -24,9 +24,9 @@ const props = defineProps<{
 const form = useForm({
     question_text: props.question.question_text,
     type: props.question.type,
-    is_required: props.question.is_required,
+    is_required: props.question.is_required ?? false,
     order: props.question.order,
-    options: props.question.options,
+    options: props.question.question_options,
 });
 
 const submit = () => {
@@ -112,11 +112,7 @@ const removeOption = (index: any) => {
                     <!-- Required -->
                     <div class="flex items-center gap-2">
                         <Label for="required">Required</Label>
-                        <Switch
-                            id="airplane-mode"
-                            class="focus:ring-amber-500 data-[state=checked]:bg-emerald-600"
-                            v-model:checked="form.is_required"
-                        />
+                        <Switch class="focus:ring-amber-500 data-[state=checked]:bg-emerald-600" v-model="form.is_required" />
                     </div>
 
                     <!-- Submit Button -->

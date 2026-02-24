@@ -29,7 +29,7 @@ class QuestionController extends Controller
             'type' => '',
             'is_required' => false,
             'order' => 0,
-            'options' => [],
+            'question_options' => [],
         ];
         return Inertia::render('questions/CreateEdit', compact('question'));
     }
@@ -39,6 +39,7 @@ class QuestionController extends Controller
      */
     public function store(Request $request)
     {
+        // dd($request->all());
         $validated = $request->validate([
             'question_text' => 'required|string',
             'type' => 'required|in:text,textarea,radio,checkbox,select,number,date',
@@ -74,7 +75,7 @@ class QuestionController extends Controller
 
             DB::commit();
 
-            return Inertia::render('questions/Index');
+            return redirect()->route('questions.index');
         } catch (\Exception $e) {
 
             DB::rollBack();
@@ -99,7 +100,8 @@ class QuestionController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $question = Question::with('questionOptions')->findOrFail($id);
+        return Inertia::render('questions/CreateEdit', compact('question'));
     }
 
     /**
@@ -107,7 +109,79 @@ class QuestionController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $validated = $request->validate([
+            'question_text' => 'required|string',
+            'type' => 'required|in:text,textarea,radio,checkbox,select,number,date',
+            'is_required' => 'nullable|boolean',
+            'order' => 'nullable|integer',
+            'options' => 'nullable|array',
+            'options.*.option_text' => 'required_if:type,radio,checkbox,select|string'
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+
+            $question = Question::with('questionOptions')->findOrFail($id);
+
+            // Update question
+            $question->update([
+                'question_text' => $validated['question_text'],
+                'type' => $validated['type'],
+                'is_required' => $validated['is_required'] ?? false,
+                'order' => $validated['order'] ?? 0,
+            ]);
+
+            // If question type supports options
+            if (in_array($validated['type'], ['radio', 'checkbox', 'select'])) {
+
+                $existingOptionIds = $question->questionOptions->pluck('id')->toArray();
+                $incomingOptionIds = [];
+
+                foreach ($validated['options'] ?? [] as $index => $option) {
+
+                    // If option already exists → update
+                    if (isset($option['id'])) {
+
+                        $incomingOptionIds[] = $option['id'];
+
+                        QuestionOption::where('id', $option['id'])
+                            ->update([
+                                'option_text' => $option['option_text'],
+                                'order' => $index,
+                            ]);
+                    } else {
+                        // New option → create
+                        QuestionOption::create([
+                            'question_id' => $question->id,
+                            'option_text' => $option['option_text'],
+                            'order' => $index,
+                        ]);
+                    }
+                }
+
+                // Delete removed options
+                $toDelete = array_diff($existingOptionIds, $incomingOptionIds);
+
+                QuestionOption::whereIn('id', $toDelete)->delete();
+            } else {
+                // If changed to type without options → delete all options
+                QuestionOption::where('question_id', $question->id)->delete();
+            }
+
+            DB::commit();
+
+            return redirect()->route('questions.index')
+                ->with('success', 'Question updated successfully');
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Something went wrong',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -115,6 +189,6 @@ class QuestionController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        Question::find($id)->delete();
     }
 }

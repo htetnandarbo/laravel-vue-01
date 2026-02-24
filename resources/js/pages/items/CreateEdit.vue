@@ -1,26 +1,36 @@
 <script setup lang="ts">
-import { index, store, update } from '@/actions/App/Http/Controllers/PlanController';
+import { index, store, update } from '@/actions/App/Http/Controllers/ItemController';
+import ImageUpload from '@/components/ImageUpload.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Link, useForm } from '@inertiajs/vue3';
+import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { ArrowLeft } from 'lucide-vue-next';
+import { computed } from 'vue';
 const props = defineProps<{
-    plan: any;
+    item: any;
 }>();
 
 const form = useForm({
-    name: props.plan.name,
-    display_name: props.plan.display_name,
-    detail: props.plan.detail,
+    name: props.item.name,
+    image: props.item.image,
 });
 
+const page = usePage();
+const errors = computed(() => page.props.errors);
 const submit = () => {
-    if (props.plan.id) {
-        form.submit(update(props.plan.id));
+    if (props.item.id) {
+        router.post(
+            update(props.item.id),
+            { ...(form as any), _method: 'put' },
+            {
+                onError: () => {
+                    form.errors = errors.value;
+                },
+            },
+        );
     } else {
         form.submit(store());
     }
@@ -36,7 +46,7 @@ const submit = () => {
         </div>
 
         <div class="m-5 max-w-2xl flex-1 rounded-xl border p-5 lg:m-5">
-            <form @submit.prevent="submit">
+            <form @submit.prevent="submit" enctype="multipart/form-data">
                 <div class="flex flex-col gap-6">
                     <!-- Name -->
                     <div class="grid gap-2">
@@ -45,20 +55,10 @@ const submit = () => {
                         <InputError :message="form.errors.name"></InputError>
                     </div>
 
-                    <!-- Display Name -->
+                    <!-- Image -->
                     <div class="grid gap-2">
-                        <Label for="name">Display Name</Label>
-                        <Input id="name" type="text" placeholder="Display Name" v-model="form.display_name" />
-                        <InputError :message="form.errors.display_name"></InputError>
+                        <ImageUpload label="Image" v-model="form.image" :existing-image="item.image ? `/storage/${item.image}` : null" />
                     </div>
-
-                    <!-- Detail -->
-
-                    <div class="grid gap-2">
-                        <Label for="Detail">Detail</Label>
-                        <Textarea placeholder="Type your message here." rows="3" v-model="form.detail" />
-                    </div>
-                    <InputError :message="form.errors.detail"></InputError>
 
                     <!-- Submit Button -->
                     <div>

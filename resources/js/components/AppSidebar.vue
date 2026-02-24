@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { index as dashboard } from '@/actions/App/Http/Controllers/DashboardController';
-import { index as planIndex } from '@/actions/App/Http/Controllers/PlanController';
+import { index as itemIndex } from '@/actions/App/Http/Controllers/ItemController';
 import { index as questionIndex } from '@/actions/App/Http/Controllers/QuestionController';
 import { index as userIndex } from '@/actions/App/Http/Controllers/UserController';
+
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, Bell, List, QrCode, Settings2, User, X } from 'lucide-vue-next';
+import { Bell, LayoutGrid, QrCode, Settings2, User, X } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -39,7 +40,9 @@ const setup = computed(() => [
     {
         title: 'Setups',
         icon: Settings2,
-        isActive: [userIndex().url, planIndex().url, questionIndex().url, '/admin/qr-batches', '/admin/notifications'].some((url) => currentUrl.startsWith(url)),
+        isActive: [userIndex().url, questionIndex().url, itemIndex().url, '/admin/qr-batches', '/admin/notifications'].some((url) =>
+            currentUrl.startsWith(url),
+        ),
         items: [
             {
                 title: 'Questions',
@@ -47,14 +50,14 @@ const setup = computed(() => [
                 icon: '',
             },
             {
+                title: 'Prizes',
+                href: itemIndex(),
+                icon: '',
+            },
+            {
                 title: 'Users',
                 href: userIndex(),
                 icon: User,
-            },
-            {
-                title: 'Plans',
-                href: planIndex(),
-                icon: List,
             },
             {
                 title: 'QR Batches',
@@ -225,12 +228,8 @@ onBeforeUnmount(() => {
     </Sidebar>
     <slot />
 
-    <div class="pointer-events-none fixed right-4 top-4 z-50 flex w-full max-w-sm flex-col gap-2">
-        <div
-            v-for="toast in toasts"
-            :key="toast.id"
-            class="pointer-events-auto rounded-lg border bg-background p-3 shadow-lg"
-        >
+    <div class="pointer-events-none fixed top-4 right-4 z-50 flex w-full max-w-sm flex-col gap-2">
+        <div v-for="toast in toasts" :key="toast.id" class="pointer-events-auto rounded-lg border bg-background p-3 shadow-lg">
             <div class="flex items-start gap-3">
                 <Bell class="mt-0.5 size-4 text-amber-500" />
                 <div class="min-w-0 flex-1">
