@@ -175,49 +175,10 @@ watch(resultModalOpen, async (isOpen, wasOpen) => {
     }
 });
 
-watch(
-    [wheelRotation, spinCount, selectedPrize],
-    () => {
-        localStorage.setItem(
-            'wishinluck:spin-state',
-            JSON.stringify({
-                wheelRotation: wheelRotation.value,
-                spinCount: spinCount.value,
-                selectedPrizeLabel: selectedPrize.value?.label ?? null,
-            }),
-        );
-    },
-    { deep: false },
-);
-
 onMounted(() => {
-    try {
-        const raw = localStorage.getItem('wishinluck:spin-state');
-        if (!raw) return;
-
-        const state = JSON.parse(raw) as {
-            wheelRotation?: number;
-            spinCount?: number;
-            selectedPrizeLabel?: string | null;
-        };
-
-        if (typeof state.wheelRotation === 'number') {
-            wheelRotation.value = state.wheelRotation;
-        }
-
-        if (typeof state.spinCount === 'number') {
-            spinCount.value = state.spinCount;
-        }
-
-        if (state.selectedPrizeLabel) {
-            const matchedPrize = prizeSegments.find((segment) => segment.label === state.selectedPrizeLabel);
-            if (matchedPrize) {
-                selectedPrize.value = matchedPrize;
-            }
-        }
-    } catch {
-        // Ignore malformed demo storage data.
-    }
+    // Reset wheel state whenever this page is entered/reloaded.
+    // Keep in-memory state only while the user remains on this page.
+    localStorage.removeItem('wishinluck:spin-state');
 });
 
 onBeforeUnmount(() => {
