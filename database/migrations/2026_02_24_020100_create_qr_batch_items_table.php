@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('qr_batch_id')->constrained()->cascadeOnDelete();
             $table->unsignedInteger('sequence');
-            $table->string('token', 64)->unique();
+            $table->string('token', 128)->unique();
             $table->text('url');
             $table->timestamps();
 

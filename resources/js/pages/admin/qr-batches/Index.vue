@@ -69,6 +69,7 @@ const apiError = ref<string | null>(null);
 const fieldErrors = ref<Record<string, string[]>>({});
 const batch = ref<BatchPayload | null>(props.initialBatch ?? null);
 const pollHandle = ref<number | null>(null);
+const STALE_BATCH_MS = 3 * 60 * 1000;
 
 watch(
     () => [form.size_mode, form.size_preset] as const,
@@ -127,7 +128,7 @@ const refreshBatch = async (id: number) => {
 };
 
 const submit = async () => {
-    if (isRunning()) {
+    if (isBlockingRun()) {
         apiError.value = `Please wait until batch #${batch.value?.id} reaches 100% before starting another batch.`;
         return;
     }
@@ -184,6 +185,24 @@ const submit = async () => {
 
 const isRunning = () => {
     return batch.value ? ['pending', 'processing'].includes(batch.value.status) : false;
+};
+
+const isStaleRunningBatch = () => {
+    if (!batch.value || !isRunning() || !batch.value.updated_at) {
+        return false;
+    }
+
+    const updatedAt = new Date(batch.value.updated_at).getTime();
+
+    if (Number.isNaN(updatedAt)) {
+        return false;
+    }
+
+    return Date.now() - updatedAt > STALE_BATCH_MS;
+};
+
+const isBlockingRun = () => {
+    return isRunning() && !isStaleRunningBatch();
 };
 
 onBeforeUnmount(stopPolling);
@@ -306,11 +325,17 @@ onMounted(() => {
                         </div>
 
                         <CardFooter class="mt-1 flex flex-col items-start gap-2 px-0 pb-0">
-                            <Button type="submit" :disabled="submitting || isRunning()" class="cursor-pointer bg-amber-500 text-white hover:bg-amber-600">
+                            <Button type="submit" :disabled="submitting || isBlockingRun()" class="cursor-pointer bg-amber-500 text-white hover:bg-amber-600">
                                 {{ submitting ? 'Queueing...' : 'Queue Batch Generation' }}
                             </Button>
                             <span class="text-xs text-muted-foreground">
-                                {{ isRunning() ? 'Wait for the current batch to finish before queueing another.' : 'Defaults: A4, margin 8mm, gap 4mm, 4x6 grid.' }}
+                                {{
+                                    isBlockingRun()
+                                        ? 'Wait for the current batch to finish before queueing another.'
+                                        : isStaleRunningBatch()
+                                          ? 'Previous batch looks stuck (no updates for 3+ minutes). You can queue a new batch now.'
+                                          : 'Defaults: A4, margin 8mm, gap 4mm, 4x6 grid.'
+                                }}
                             </span>
                         </CardFooter>
                     </form>
@@ -337,6 +362,9 @@ onMounted(() => {
                         <div class="grid grid-cols-2 gap-2">
                             <span class="text-muted-foreground">Status</span>
                             <span class="font-medium uppercase">{{ batch.status }}</span>
+                        </div>
+                        <div v-if="isStaleRunningBatch()" class="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                            This batch appears stuck. If the queue worker crashed or is running old code, restart `php artisan queue:work`.
                         </div>
                         <div class="grid gap-2">
                             <div class="flex items-center justify-between gap-2">

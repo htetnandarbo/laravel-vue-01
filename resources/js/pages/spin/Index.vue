@@ -56,7 +56,7 @@ const prizeSegments: PrizeSegment[] = [
     },
     { label: 'Premium Watch', wheelLabel: 'Watch', color: '#93c5fd', textColor: '#172554', icon: Watch, imageUrl: '/demo-prizes/premium-watch.png' },
     { label: 'Mystery Box', wheelLabel: 'Mystery', color: '#a7f3d0', textColor: '#064e3b', icon: Package, imageUrl: '/demo-prizes/mystery-box.png' },
-    { label: 'Lucky Gem', wheelLabel: 'Gem', color: '#d8b4fe', textColor: '#4c1d95', icon: Gem, imageUrl: '/demo-prizes/lucky-gem.png' },
+    
 ];
 
 const segmentAngle = 360 / prizeSegments.length;
@@ -81,6 +81,14 @@ const wheelGradient = computed(() => {
 
     return `conic-gradient(${stops})`;
 });
+
+const numberedPrizeSegments = computed(() =>
+    prizeSegments.map((segment, index) => ({
+        ...segment,
+        number: index + 1,
+        centerAngle: index * segmentAngle + segmentAngle / 2,
+    })),
+);
 
 const normalizedRotation = computed(() => {
     const angle = wheelRotation.value % 360;
@@ -252,6 +260,20 @@ onBeforeUnmount(() => {
                                 <div class="absolute inset-3 rounded-full border border-white/70 bg-white/10" />
 
                                 <div
+                                    v-for="segment in numberedPrizeSegments"
+                                    :key="`wheel-number-${segment.label}`"
+                                    class="absolute top-1/2 left-1/2 z-[5] h-0 w-0"
+                                    :style="{ transform: `translate(-50%, -50%) rotate(${segment.centerAngle}deg) translateY(-165px)` }"
+                                >
+                                    <div
+                                        class="grid size-6 place-items-center rounded-full border border-white/85 bg-white/95 text-[10px] font-bold text-slate-800 shadow-sm"
+                                        :style="{ transform: `rotate(${-segment.centerAngle}deg)` }"
+                                    >
+                                        {{ segment.number }}
+                                    </div>
+                                </div>
+
+                                <div
                                     class="absolute top-1/2 left-1/2 z-10 grid size-[84px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-white/90 bg-amber-600 text-center text-xs font-bold tracking-[0.14em] text-white shadow-xl"
                                 >
                                     SPIN
@@ -290,7 +312,7 @@ onBeforeUnmount(() => {
                     <CardContent>
                         <div class="grid grid-cols-1 gap-2">
                             <div
-                                v-for="segment in prizeSegments"
+                                v-for="(segment, index) in prizeSegments"
                                 :key="`guide-${segment.label}`"
                                 :ref="(el) => setGuideItemRef(segment.label, el)"
                                 class="prize-guide-item flex items-center justify-between rounded-xl border px-3 py-2 transition-all duration-300"
@@ -301,6 +323,13 @@ onBeforeUnmount(() => {
                                 }"
                             >
                                 <div class="flex min-w-0 items-center gap-2">
+                                    <span
+                                        class="inline-flex size-6 shrink-0 items-center justify-center rounded-full border bg-white text-[11px] font-bold text-slate-700 shadow-sm"
+                                        :class="{ 'border-amber-300 text-amber-800': selectedPrize?.label === segment.label, 'border-slate-200': selectedPrize?.label !== segment.label }"
+                                    >
+                                        {{ index + 1 }}
+                                    </span>
+
                                     <span
                                         class="prize-guide-icon grid size-8 shrink-0 place-items-center rounded-lg border bg-white shadow-sm"
                                         :class="{ 'prize-guide-icon--winner': selectedPrize?.label === segment.label }"
@@ -319,7 +348,7 @@ onBeforeUnmount(() => {
                                     <div class="min-w-0">
                                         <p class="truncate text-sm font-medium text-slate-800">{{ segment.label }}</p>
                                         <p class="text-xs text-slate-500">
-                                            {{ selectedPrize?.label === segment.label ? 'Winning gift' : 'Prize option' }}
+                                            {{ selectedPrize?.label === segment.label ? `Winning gift • Slice ${index + 1}` : `Prize option • Slice ${index + 1}` }}
                                         </p>
                                     </div>
                                 </div>

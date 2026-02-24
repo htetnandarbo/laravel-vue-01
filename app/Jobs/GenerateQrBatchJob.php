@@ -8,6 +8,7 @@ use App\Notifications\QrBatchReadyNotification;
 use App\Services\QrBatch\QrBatchGeneratorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class GenerateQrBatchJob implements ShouldQueue
@@ -42,6 +43,23 @@ class GenerateQrBatchJob implements ShouldQueue
     public function failed(?Throwable $exception): void
     {
         $batch = QrBatch::find($this->qrBatchId);
+
+        if ($exception) {
+            report($exception);
+
+            Log::error('QR batch generation job failed', [
+                'qr_batch_id' => $this->qrBatchId,
+                'exception_class' => $exception::class,
+                'message' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
+        } else {
+            Log::error('QR batch generation job failed without exception', [
+                'qr_batch_id' => $this->qrBatchId,
+            ]);
+        }
 
         if (! $batch) {
             return;
