@@ -7,7 +7,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { demo as thanksDemo } from '@/routes/thanks';
-import { Briefcase, Coffee, Gem, Gift, Headphones, Package, ShoppingBag, Smartphone, Ticket, Trophy, Umbrella, Watch } from 'lucide-vue-next';
+import { Briefcase, Coffee, Gift, Headphones, Package, ShoppingBag, Smartphone, Ticket, Trophy, Umbrella, Watch } from 'lucide-vue-next';
+
+const isMobile = ref(false);
+
+const checkScreen = () => {
+    isMobile.value = window.innerWidth < 640; // Tailwind sm breakpoint
+};
+
+onMounted(() => {
+    checkScreen();
+    window.addEventListener('resize', checkScreen);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('resize', checkScreen);
+});
 
 type PrizeSegment = {
     label: string;
@@ -16,10 +31,19 @@ type PrizeSegment = {
     textColor?: string;
     icon: Component;
     imageUrl?: string;
+    centerAngle?: number;
 };
 
 const prizeSegments: PrizeSegment[] = [
-    { label: 'Umbrella', wheelLabel: 'Umbrella', color: '#f59e0b', textColor: '#451a03', icon: Umbrella, imageUrl: '/demo-prizes/umbrella.png' },
+    {
+        label: 'Umbrella',
+        wheelLabel: 'Umbrella',
+        color: '#f59e0b',
+        textColor: '#451a03',
+        icon: Umbrella,
+        imageUrl: '/demo-prizes/umbrella.png',
+        centerAngle: 0,
+    },
     {
         label: 'Shopping Bag',
         wheelLabel: 'Bag',
@@ -57,7 +81,6 @@ const prizeSegments: PrizeSegment[] = [
     },
     { label: 'Premium Watch', wheelLabel: 'Watch', color: '#93c5fd', textColor: '#172554', icon: Watch, imageUrl: '/demo-prizes/premium-watch.png' },
     { label: 'Mystery Box', wheelLabel: 'Mystery', color: '#a7f3d0', textColor: '#064e3b', icon: Package, imageUrl: '/demo-prizes/mystery-box.png' },
-    
 ];
 
 const segmentAngle = 360 / prizeSegments.length;
@@ -205,154 +228,67 @@ onBeforeUnmount(() => {
 
     <div class="min-h-screen bg-linear-to-b from-amber-100 via-orange-50 to-rose-50 px-4 py-6 sm:px-6 sm:py-10">
         <div class="mx-auto w-full max-w-5xl">
-            <div class="grid grid-cols-1 gap-5 lg:grid-cols-[1.08fr_0.92fr]">
-                <Card class="rounded-3xl border border-white/60 bg-white/85 shadow-xl shadow-orange-100/80 backdrop-blur">
-                    <CardHeader class="pb-3">
-                        <CardTitle class="text-slate-900">Spin Wheel</CardTitle>
-                        <CardDescription class="text-slate-600">
-                            Press spin and wait for the wheel to stop. The prize result will appear in a modal popup.
-                        </CardDescription>
-                    </CardHeader>
+            <Card class="rounded-3xl border border-white/60 bg-white/85 shadow-xl shadow-orange-100/80 backdrop-blur">
+                <CardHeader class="pb-3">
+                    <CardTitle class="text-slate-900">Spin Wheel</CardTitle>
+                    <CardDescription class="text-slate-600"> ကံစမ်းဖို့ SPIN Wheel လေးလှည့်ပါ။ </CardDescription>
+                </CardHeader>
 
-                    <CardContent class="space-y-5">
-                        <div class="relative mx-auto w-full max-w-sm">
-                            <div class="pointer-triangle absolute top-0 left-1/2 z-20 -translate-x-1/2 -translate-y-1" />
+                <CardContent class="space-y-5">
+                    <div class="relative mx-auto w-full max-w-sm">
+                        <div class="pointer-triangle absolute top-0 left-1/2 z-20 -translate-x-1/2 -translate-y-1" />
 
-                            <div class="absolute inset-4 rounded-full bg-orange-300/25 blur-2xl" />
-
-                            <div
-                                class="wheel-shell relative mt-5 aspect-square rounded-full border-8 border-white/70 shadow-2xl shadow-orange-200/80"
-                                :class="{ 'wheel-spinning': isSpinning }"
-                                :style="{
-                                    background: wheelGradient,
-                                    transform: `rotate(${wheelRotation}deg)`,
-                                    transition: isSpinning ? `transform ${spinDurationMs}ms cubic-bezier(0.08, 0.85, 0.18, 1)` : 'none',
-                                }"
-                            >
-                                <div class="absolute inset-3 rounded-full border border-white/70 bg-white/10" />
-
-                                <div
-                                    v-for="segment in numberedPrizeSegments"
-                                    :key="`wheel-number-${segment.label}`"
-                                    class="absolute top-1/2 left-1/2 z-[5] h-0 w-0"
-                                    :style="{ transform: `translate(-50%, -50%) rotate(${segment.centerAngle}deg) translateY(-118px)` }"
-                                >
-                                    <div
-                                        class="grid size-6 place-items-center rounded-full border border-white/85 bg-white/95 text-[10px] font-bold text-slate-800 shadow-sm"
-                                        :style="{ transform: `rotate(${-segment.centerAngle}deg)` }"
-                                    >
-                                        {{ segment.number }}
-                                    </div>
-                                </div>
-
-                                <div
-                                    class="absolute top-1/2 left-1/2 z-10 grid size-[84px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-white/90 bg-amber-600 text-center text-xs font-bold tracking-[0.14em] text-white shadow-xl"
-                                >
-                                    SPIN
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div class="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                                Spins: <span class="font-semibold text-amber-950">{{ spinCount }}</span>
-                            </div>
-
-                            <Button
-                                type="button"
-                                class="w-full cursor-pointer rounded-xl bg-amber-500 text-white shadow-md shadow-amber-200 hover:bg-amber-600 sm:w-auto"
-                                :disabled="isSpinning"
-                                @click="spinWheel"
-                            >
-                                {{ isSpinning ? 'Spinning...' : 'Spin Now' }}
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card class="rounded-3xl border border-white/60 bg-white/85 shadow-xl shadow-orange-100/80 backdrop-blur">
-                    <CardHeader class="pb-3">
-                        <CardTitle class="flex items-center gap-2 text-slate-900">
-                            <Gift class="size-5 text-amber-600" />
-                            Gift Guide
-                        </CardTitle>
-                        <CardDescription class="text-slate-600">
-                            After spinning, the winning gift stays highlighted here even if the result modal is closed.
-                        </CardDescription>
-                    </CardHeader>
-
-                    <CardContent>
-                        <div class="grid grid-cols-1 gap-2">
-                            <div
-                                v-for="(segment, index) in prizeSegments"
-                                :key="`guide-${segment.label}`"
-                                :ref="(el) => setGuideItemRef(segment.label, el)"
-                                class="prize-guide-item flex items-center justify-between rounded-xl border px-3 py-2 transition-all duration-300"
-                                :class="{
-                                    'border-slate-200 bg-white': !selectedPrize,
-                                    'prize-guide-item--winner border-amber-300 bg-amber-50/80': selectedPrize?.label === segment.label,
-                                    'opacity-40 grayscale saturate-0': selectedPrize && selectedPrize.label !== segment.label,
-                                }"
-                            >
-                                <div class="flex min-w-0 items-center gap-2">
-                                    <span
-                                        class="inline-flex size-6 shrink-0 items-center justify-center rounded-full border bg-white text-[11px] font-bold text-slate-700 shadow-sm"
-                                        :class="{ 'border-amber-300 text-amber-800': selectedPrize?.label === segment.label, 'border-slate-200': selectedPrize?.label !== segment.label }"
-                                    >
-                                        {{ index + 1 }}
-                                    </span>
-
-                                    <span
-                                        class="prize-guide-icon grid size-8 shrink-0 place-items-center rounded-lg border bg-white shadow-sm"
-                                        :class="{ 'prize-guide-icon--winner': selectedPrize?.label === segment.label }"
-                                    >
-                                        <img
-                                            v-if="segment.imageUrl"
-                                            :src="segment.imageUrl"
-                                            :alt="segment.label"
-                                            class="h-5 w-5 rounded object-contain"
-                                        />
-                                        <component v-else :is="segment.icon" class="size-4 text-slate-700" />
-                                    </span>
-
-                                    <span class="size-2.5 shrink-0 rounded-full border border-white/70" :style="{ backgroundColor: segment.color }" />
-
-                                    <div class="min-w-0">
-                                        <p class="truncate text-sm font-medium text-slate-800">{{ segment.label }}</p>
-                                        <p class="text-xs text-slate-500">
-                                            {{ selectedPrize?.label === segment.label ? `Winning gift • Slice ${index + 1}` : `Prize option • Slice ${index + 1}` }}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <span
-                                    class="rounded-full px-2 py-1 text-[11px] font-medium"
-                                    :class="selectedPrize?.label === segment.label ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-500'"
-                                >
-                                    {{ selectedPrize?.label === segment.label ? 'Won' : 'Gift' }}
-                                </span>
-                            </div>
-                        </div>
+                        <div class="absolute inset-4 rounded-full bg-orange-300/25 blur-2xl" />
 
                         <div
-                            v-if="selectedPrize && showScrollTutorial"
-                            class="tutorial-shadow mt-3 rounded-xl border border-amber-200/80 bg-white/90 p-3 shadow-lg shadow-amber-100"
+                            class="wheel-shell relative mt-5 aspect-square rounded-full border-8 border-white/70 shadow-2xl shadow-orange-200/80"
+                            :class="{ 'wheel-spinning': isSpinning }"
+                            :style="{
+                                background: wheelGradient,
+                                transform: `rotate(${wheelRotation}deg)`,
+                                transition: isSpinning ? `transform ${spinDurationMs}ms cubic-bezier(0.08, 0.85, 0.18, 1)` : 'none',
+                            }"
                         >
-                            <div class="flex items-start gap-3">
-                                <div class="tutorial-bounce grid size-8 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-700">↓</div>
-                                <div>
-                                    <p class="text-sm font-semibold text-amber-900">Your gift is saved here</p>
-                                    <p class="text-xs leading-5 text-amber-800/90">
-                                        If the modal is closed, check this highlighted gift. Scroll down to continue to the next page.
-                                    </p>
+                            <div class="absolute inset-3 rounded-full border border-white/70 bg-white/10" />
+                            <div
+                                v-for="(segment, index) in prizeSegments"
+                                :key="`wheel-number-${segment.label}`"
+                                class="absolute top-1/2 left-1/2 z-[5]"
+                                :style="{
+                                    transform: `translate(-50%, -50%) rotate(${numberedPrizeSegments[index].centerAngle}deg) translateY(-${isMobile ? 85 : 100}px)`,
+                                }"
+                            >
+                                <div class="text-[9px] [writing-mode:vertical-lr] sm:text-xs">
+                                    {{ segment.label }}
                                 </div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
 
-            <div class="mx-auto mt-5 w-full max-w-3xl">
+                            <div
+                                class="absolute top-1/2 left-1/2 z-10 grid size-[84px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-white/90 bg-amber-600 text-center text-xs font-bold tracking-[0.14em] text-white shadow-xl"
+                            >
+                                SPIN
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div class="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                            Spins: <span class="font-semibold text-amber-950">{{ spinCount }}</span>
+                        </div>
+
+                        <Button
+                            type="button"
+                            class="w-full cursor-pointer rounded-xl bg-amber-500 text-white shadow-md shadow-amber-200 hover:bg-amber-600 sm:w-auto"
+                            :disabled="isSpinning"
+                            @click="spinWheel"
+                        >
+                            {{ isSpinning ? 'Spinning...' : 'Spin Now' }}
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <div class="mx-auto mt-2 w-full">
                 <Card class="rounded-2xl border border-white/60 bg-white/80 shadow-lg shadow-orange-100/70 backdrop-blur">
                     <CardContent class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
