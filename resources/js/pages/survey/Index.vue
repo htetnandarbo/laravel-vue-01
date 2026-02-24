@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { demo as wishDemo } from '@/routes/wish';
@@ -49,11 +48,11 @@ const referenceImagePreviewUrl = ref<string | null>(null);
 const referenceImageInput = ref<HTMLInputElement | null>(null);
 
 const canProceedToWish = computed(() => {
-    return Boolean(form.fullName && form.visitGoal && form.satisfaction && form.preferredContact && form.recommendUs);
+    return Boolean(form.fullName && form.visitGoal && form.satisfaction);
 });
 
 const nextStep = () => {
-    if (!canProceedToWish.value) return;
+    // if (!canProceedToWish.value) return;
     router.visit(wishDemo());
 };
 
@@ -112,83 +111,84 @@ onBeforeUnmount(() => {
     <div class="min-h-screen bg-gradient-to-b from-amber-50 via-white to-orange-50 px-4 py-6 sm:px-6 sm:py-10">
         <div class="mx-auto w-full max-w-3xl">
             <Card class="overflow-hidden rounded-3xl border-0 shadow-lg shadow-orange-100/70">
-                <CardHeader class="bg-white pb-4">
+                <CardHeader class="bg-white">
                     <CardTitle class="text-lg text-slate-900 sm:text-xl">Survey Questions</CardTitle>
                     <CardDescription class="text-sm text-slate-600">
-                        Fill this sample survey, then tap Next to continue to the wish & luck demo screen.
+                        Fill this survey, then tap Next to continue to the wish & get luck.
                     </CardDescription>
                 </CardHeader>
 
-                <CardContent class="space-y-6 bg-white p-4 sm:p-6">
-                    <div class="space-y-4">
-                         <div class="grid gap-2">
-                            <Label for="referenceImage">Upload a reference image (optional)</Label>
+                <CardContent class="space-y-6 bg-white">
+                    <div class="space-y-6">
+                        <div class="grid gap-2">
+                            <Label for="referenceImage">ပုံထည့်ရန်</Label>
                             <div class="rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50/60 p-4">
-                            <label
-                                for="referenceImage"
-                                class="group block cursor-pointer transition hover:opacity-95"
-                            >
-                                <div class="flex items-start gap-3">
-                                    <div class="rounded-xl bg-white p-2 text-amber-600 shadow-sm">
-                                        <ImagePlus class="size-5" />
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <div class="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                                            <UploadCloud class="size-4 text-amber-600" />
-                                            Add Image
+                                <label for="referenceImage" class="group block cursor-pointer transition hover:opacity-95">
+                                    <div class="flex items-start gap-3">
+                                        <div class="rounded-xl bg-white p-2 text-amber-600 shadow-sm">
+                                            <ImagePlus class="size-5" />
                                         </div>
-                                        <p class="mt-1 text-xs text-slate-600">
-                                            Upload a photo or screenshot so we can understand your preference better (demo only).
-                                        </p>
-                                        <p class="mt-2 text-xs font-medium text-amber-700">
-                                            {{ referenceImageFile ? `Selected: ${referenceImageFile.name}` : 'Click here to choose an image file' }}
-                                        </p>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                                                <UploadCloud class="size-4 text-amber-600" />
+                                                Add Image
+                                            </div>
+                                            <p class="mt-2 text-xs font-medium text-amber-700">
+                                                {{
+                                                    referenceImageFile ? `Selected: ${referenceImageFile.name}` : 'Click here to choose an image file'
+                                                }}
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div v-if="referenceImagePreviewUrl" class="mt-3 overflow-hidden rounded-xl border bg-white">
-                                    <img :src="referenceImagePreviewUrl" alt="Reference preview" class="max-h-48 w-full object-cover" />
-                                </div>
-                            </label>
+                                    <div v-if="referenceImagePreviewUrl" class="mt-3 overflow-hidden rounded-xl border bg-white">
+                                        <img :src="referenceImagePreviewUrl" alt="Reference preview" class="max-h-48 w-full object-cover" />
+                                    </div>
+                                </label>
 
-                            <div v-if="referenceImageFile" class="mt-3 flex justify-end">
-                                <button
-                                    type="button"
-                                    class="inline-flex items-center gap-2 rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50"
-                                    @click="clearReferenceImage"
-                                >
-                                    <Trash2 class="size-3.5" />
-                                    Remove image
-                                </button>
+                                <div v-if="referenceImageFile" class="mt-3 flex justify-end">
+                                    <button
+                                        type="button"
+                                        class="inline-flex items-center gap-2 rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50"
+                                        @click="clearReferenceImage"
+                                    >
+                                        <Trash2 class="size-3.5" />
+                                        Remove image
+                                    </button>
+                                </div>
                             </div>
-                            </div>
-                            <Input id="referenceImage" ref="referenceImageInput" type="file" accept="image/*" class="hidden" @change="onReferenceImageChange" />
+                            <Input
+                                id="referenceImage"
+                                ref="referenceImageInput"
+                                type="file"
+                                accept="image/*"
+                                class="hidden"
+                                @change="onReferenceImageChange"
+                            />
                         </div>
-                        
 
                         <div class="grid gap-2">
-                            <Label for="fullName">What is your full name? * </Label>
-                            <Input id="fullName" v-model="form.fullName" type="text" placeholder="John Doe" />
+                            <Label for="fullName">သင့်နာမည် ကဘာလဲ? </Label>
+                            <Input id="fullName" v-model="form.fullName" type="text" placeholder="မစုမွန်" />
                         </div>
 
                         <div class="grid gap-2">
-                            <Label for="favoriteProduct">Which product are you interested in most? </Label>
+                            <Label for="favoriteProduct">သင်အကြိုက်ဆုံး ပစ္စည်းကဘယ်လိုပစ္စည်းလဲ? </Label>
                             <Input id="favoriteProduct" v-model="form.favoriteProduct" type="text" placeholder="Wireless earbuds" />
                         </div>
 
                         <div class="grid gap-2">
-                            <Label for="eventDate">When do you plan to visit or purchase? </Label>
+                            <Label for="eventDate">သင် ဘယ်အချိန်ဝယ်လိုက်တာလဲ? </Label>
                             <Input id="eventDate" v-model="form.eventDate" type="date" />
                         </div>
 
                         <div class="grid gap-2">
-                            <Label for="monthlyBudget">What is your estimated monthly budget? </Label>
-                            <Input id="monthlyBudget" v-model="form.monthlyBudget" type="number" min="0" step="1" placeholder="100" />
+                            <Label for="monthlyBudget"> 1 to 10 အမှတ်ပေးမယ်ဆိုရင်ရော? </Label>
+                            <Input id="monthlyBudget" v-model="form.monthlyBudget" type="number" min="0" step="1" placeholder="8" />
                         </div>
 
-
                         <div class="grid gap-2">
-                            <Label>What is your main reason for visiting us? *</Label>
+                            <Label>သင် ဘယ်အကြောင်းကြောင့် ဝင်လာခဲ့တယ်လဲ?</Label>
                             <Select v-model="form.visitGoal">
                                 <SelectTrigger>
                                     <SelectValue placeholder="Choose one" />
@@ -207,15 +207,15 @@ onBeforeUnmount(() => {
                         </div>
 
                         <div class="grid gap-2">
-                            <Label for="city">Which city are you from? </Label>
+                            <Label for="city">သင် ဘယ်မြို့ကလဲ? </Label>
                             <Input id="city" v-model="form.city" type="text" placeholder="Yangon" />
                         </div>
 
                         <div class="grid gap-2">
-                            <Label>How satisfied are you with the current experience? *</Label>
+                            <Label>သင့်ရဲ့ စိတ်ကျေနပ်မူက?</Label>
                             <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
                                 <button
-                                    v-for="option in ['Very satisfied', 'Satisfied', 'Neutral', 'Unsatisfied']"
+                                    v-for="option in ['Satisfied', 'Neutral', 'Unsatisfied']"
                                     :key="option"
                                     type="button"
                                     class="rounded-xl border px-4 py-3 text-left text-sm transition-all"
@@ -232,55 +232,10 @@ onBeforeUnmount(() => {
                         </div>
 
                         <div class="grid gap-2">
-                            <Label>Preferred contact method *</Label>
-                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                                <button
-                                    v-for="method in ['Email', 'Phone', 'WhatsApp', 'SMS']"
-                                    :key="method"
-                                    type="button"
-                                    class="rounded-xl border px-3 py-2 text-sm font-medium transition-all"
-                                    :class="
-                                        form.preferredContact === method
-                                            ? 'border-orange-400 bg-orange-50 text-orange-800'
-                                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                                    "
-                                    @click="form.preferredContact = method"
-                                >
-                                    {{ method }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="grid gap-2">
-                            <Label>Would you recommend us to a friend or colleague? *</Label>
-                            <RadioGroup v-model="form.recommendUs" class="gap-2">
-                                <label
-                                    v-for="option in ['Yes', 'Maybe', 'No']"
-                                    :key="option"
-                                    class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm transition hover:border-slate-300"
-                                >
-                                    <RadioGroupItem :id="`recommend-${option.toLowerCase()}`" :value="option" />
-                                    <div>
-                                        <p class="font-medium text-slate-800">{{ option }}</p>
-                                        <p class="text-xs text-slate-500">
-                                            {{
-                                                option === 'Yes'
-                                                    ? 'Positive intent to refer others'
-                                                    : option === 'Maybe'
-                                                      ? 'Needs more confidence before recommending'
-                                                      : 'Not satisfied enough to recommend'
-                                            }}
-                                        </p>
-                                    </div>
-                                </label>
-                            </RadioGroup>
-                        </div>
-
-                        <div class="grid gap-2">
-                            <Label>What are you interested in today? (checkbox)</Label>
+                            <Label>ဒီနေ စိတ်အဝင်စားဆုံးက?</Label>
                             <div class="grid gap-2 sm:grid-cols-2">
                                 <label
-                                    v-for="interest in ['Promotions', 'New arrivals', 'Support', 'Membership']"
+                                    v-for="interest in ['Promotions', 'New arrivals', 'Membership']"
                                     :key="interest"
                                     class="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
                                 >
@@ -295,30 +250,17 @@ onBeforeUnmount(() => {
                         </div>
 
                         <div class="grid gap-2">
-                            <Label for="improvements">What should we improve? (optional)</Label>
-                            <Textarea
-                                id="improvements"
-                                v-model="form.improvements"
-                                rows="4"
-                                placeholder="Example: faster checkout, clearer pricing, better support response..."
-                            />
-                        </div>
-
-                        <div class="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                            <Checkbox id="acceptUpdates" v-model:checked="form.acceptUpdates" />
-                            <Label for="acceptUpdates" class="cursor-pointer leading-5">
-                                I would like to receive updates or follow-up communication (demo option).
-                            </Label>
+                            <Label for="improvements">ကျွနိုပ်တို့ ဘာများ Improve လုပ်ရမလဲ?</Label>
+                            <Textarea id="improvements" v-model="form.improvements" rows="4" placeholder="Message..." />
                         </div>
                     </div>
 
                     <div class="flex flex-col-reverse gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
                         <div />
-
+                        <!-- :disabled="!canProceedToWish" -->
                         <Button
                             type="button"
                             class="w-full cursor-pointer rounded-xl bg-amber-500 text-white hover:bg-amber-600 sm:w-auto"
-                            :disabled="!canProceedToWish"
                             @click="nextStep"
                         >
                             Next

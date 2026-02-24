@@ -3,9 +3,8 @@ import { Head, router } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { demo as spinDemo } from '@/routes/spin';
@@ -17,7 +16,7 @@ const wishText = ref('');
 const draftWish = ref('');
 
 const wishPreview = computed(() => {
-    return wishText.value.trim() || 'Fill your wish';
+    return wishText.value.trim() || 'Wish လေးကို ဖြည့်ပါ';
 });
 
 const hasWish = computed(() => Boolean(wishText.value.trim()));
@@ -62,12 +61,12 @@ onBeforeUnmount(() => {
         <div class="mx-auto w-full max-w-4xl">
             <div class="mx-auto max-w-2xl">
                 <Card class="rounded-3xl border-0 bg-white/85 backdrop-blur">
-                    <CardHeader class="pb-3">
-                        <CardTitle class="flex items-center gap-2 text-slate-900">
+                    <CardHeader>
+                        <CardTitle class="flex items-center justify-center gap-2 text-slate-900">
                             <Gift class="size-5 text-amber-600" />
-                            Your Wish Card
+                            <span>Your Wish Card</span>
+                            <Gift class="size-5 text-amber-600" />
                         </CardTitle>
-                        <CardDescription>Tap the card to open a modal and write your wish.</CardDescription>
                     </CardHeader>
                     <CardContent class="space-y-4">
                         <button
@@ -104,24 +103,13 @@ onBeforeUnmount(() => {
                                 <DialogHeader class="space-y-2">
                                     <DialogTitle class="flex items-center gap-2">
                                         <Sparkles class="size-4 text-amber-600" />
-                                        Fill Your Wish
+                                        Wish လေးကို ဖြည့်ပါ
                                     </DialogTitle>
-                                    <DialogDescription>
-                                        Write one clear wish for the demo. This is frontend-only and stays on the page.
-                                    </DialogDescription>
+                                    <DialogDescription> ကိုယ့်အတွက် (သို့) ကိုယ်ချစ်ခင်ရတဲ့ သူတွေအတွက် Wish လေးရေးပေးနော်။ </DialogDescription>
                                 </DialogHeader>
 
                                 <div class="space-y-3">
-                                    <div class="grid gap-2">
-                                        <Label for="wish-text-desktop">Your wish</Label>
-                                        <Textarea
-                                            id="wish-text-desktop"
-                                            v-model="draftWish"
-                                            rows="5"
-                                            maxlength="220"
-                                            placeholder="Example: I wish my new project presentation goes smoothly and wins client approval."
-                                        />
-                                    </div>
+                                    <Textarea id="wish-text-desktop" v-model="draftWish" rows="5" maxlength="220" />
 
                                     <div class="flex items-center justify-between text-xs">
                                         <p class="text-slate-500">Tip: Specific wishes feel more meaningful in the demo.</p>
@@ -150,29 +138,13 @@ onBeforeUnmount(() => {
                                 <SheetHeader class="space-y-2 pr-8">
                                     <SheetTitle class="flex items-center gap-2">
                                         <Sparkles class="size-4 text-amber-600" />
-                                        Fill Your Wish
+                                        Wish လေးကို ဖြည့်ပါ
                                     </SheetTitle>
-                                    <SheetDescription>
-                                        Write one clear wish for the demo. This is frontend-only and stays on the page.
-                                    </SheetDescription>
+                                    <SheetDescription> ကိုယ့်အတွက် (သို့) ကိုယ်ချစ်ခင်ရတဲ့ သူတွေအတွက် Wish လေးရေးပေးနော်။ </SheetDescription>
                                 </SheetHeader>
 
                                 <div class="space-y-3 px-4">
-                                    <div class="grid gap-2">
-                                        <Label for="wish-text-mobile">Your wish</Label>
-                                        <Textarea
-                                            id="wish-text-mobile"
-                                            v-model="draftWish"
-                                            rows="5"
-                                            maxlength="220"
-                                            placeholder="Example: I wish my new project presentation goes smoothly and wins client approval."
-                                        />
-                                    </div>
-
-                                    <div class="flex items-center justify-between text-xs">
-                                        <p class="text-slate-500">Tip: Specific wishes feel more meaningful in the demo.</p>
-                                        <p :class="draftCount > 220 ? 'text-red-500' : 'text-slate-500'">{{ draftCount }}/220</p>
-                                    </div>
+                                    <Textarea id="wish-text-mobile" v-model="draftWish" rows="5" maxlength="220" />
                                 </div>
 
                                 <SheetFooter class="gap-2 px-4 pb-4">
