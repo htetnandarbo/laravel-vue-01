@@ -5,6 +5,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type Compon
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { demo as thanksDemo } from '@/routes/thanks';
 import { Briefcase, Coffee, Gem, Gift, Headphones, Package, ShoppingBag, Smartphone, Ticket, Trophy, Umbrella, Watch } from 'lucide-vue-next';
 
@@ -66,6 +67,7 @@ const spinDurationMs = 4200;
 const resultModalOpen = ref(false);
 const selectedPrize = ref<PrizeSegment | null>(null);
 const spinCount = ref(0);
+const isDesktop = ref(false);
 const showScrollTutorial = ref(false);
 const guideItemRefs = new Map<string, HTMLElement>();
 let spinTimeoutId: number | null = null;
@@ -102,6 +104,10 @@ const currentPointerIndex = computed(() => {
 });
 
 const currentPointerPrize = computed(() => prizeSegments[currentPointerIndex.value]);
+
+const updateViewportMode = () => {
+    isDesktop.value = window.innerWidth >= 640;
+};
 
 const spinWheel = () => {
     if (isSpinning.value) return;
@@ -176,12 +182,17 @@ watch(resultModalOpen, async (isOpen, wasOpen) => {
 });
 
 onMounted(() => {
+    updateViewportMode();
+    window.addEventListener('resize', updateViewportMode);
+
     // Reset wheel state whenever this page is entered/reloaded.
     // Keep in-memory state only while the user remains on this page.
     localStorage.removeItem('wishinluck:spin-state');
 });
 
 onBeforeUnmount(() => {
+    window.removeEventListener('resize', updateViewportMode);
+
     if (spinTimeoutId) {
         window.clearTimeout(spinTimeoutId);
         spinTimeoutId = null;
@@ -224,7 +235,7 @@ onBeforeUnmount(() => {
                                     v-for="segment in numberedPrizeSegments"
                                     :key="`wheel-number-${segment.label}`"
                                     class="absolute top-1/2 left-1/2 z-[5] h-0 w-0"
-                                    :style="{ transform: `translate(-50%, -50%) rotate(${segment.centerAngle}deg) translateY(-165px)` }"
+                                    :style="{ transform: `translate(-50%, -50%) rotate(${segment.centerAngle}deg) translateY(-118px)` }"
                                 >
                                     <div
                                         class="grid size-6 place-items-center rounded-full border border-white/85 bg-white/95 text-[10px] font-bold text-slate-800 shadow-sm"
@@ -368,7 +379,7 @@ onBeforeUnmount(() => {
             </div>
         </div>
 
-        <Dialog v-model:open="resultModalOpen">
+        <Dialog v-if="isDesktop" v-model:open="resultModalOpen">
             <DialogContent class="border border-amber-100 bg-white sm:max-w-md">
                 <DialogHeader class="space-y-2">
                     <DialogTitle class="flex items-center gap-2 text-slate-900">
@@ -413,6 +424,48 @@ onBeforeUnmount(() => {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+
+        <Sheet v-else v-model:open="resultModalOpen">
+            <SheetContent side="top" class="rounded-b-3xl border-amber-100 bg-white">
+                <SheetHeader class="space-y-2 pr-8">
+                    <SheetTitle class="flex items-center gap-2 text-slate-900">
+                        <Trophy class="size-5 text-amber-500" />
+                        Prize Unlocked
+                    </SheetTitle>
+                    <SheetDescription class="text-slate-600">
+                        The wheel has stopped. Show this prize result to the user and continue to the next step.
+                    </SheetDescription>
+                </SheetHeader>
+
+                <div
+                    v-if="selectedPrize"
+                    class="mx-4 rounded-2xl border p-4 text-center"
+                    :style="{
+                        borderColor: `${selectedPrize.color}55`,
+                        backgroundColor: `${selectedPrize.color}18`,
+                    }"
+                >
+                    <div class="mx-auto mb-3 grid size-12 place-items-center rounded-xl border border-white/70 bg-white/80 shadow-sm">
+                        <img
+                            v-if="selectedPrize.imageUrl"
+                            :src="selectedPrize.imageUrl"
+                            :alt="selectedPrize.label"
+                            class="h-8 w-8 rounded object-contain"
+                        />
+                        <component v-else :is="selectedPrize.icon" class="size-6 text-slate-800" />
+                    </div>
+                    <p class="text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">You got</p>
+                    <p class="mt-2 text-2xl font-semibold text-slate-900">{{ selectedPrize.label }}</p>
+                </div>
+
+                <SheetFooter class="gap-2 px-4 pb-4">
+                    <Button type="button" variant="outline" class="w-full" @click="resultModalOpen = false">Close</Button>
+                    <Button type="button" class="w-full cursor-pointer bg-amber-500 text-white hover:bg-amber-600" @click="handleResultNext">
+                        Next
+                    </Button>
+                </SheetFooter>
+            </SheetContent>
+        </Sheet>
     </div>
 </template>
 
