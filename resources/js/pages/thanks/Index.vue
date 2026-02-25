@@ -101,16 +101,8 @@ const backToSpin = () => {
                             </div>
 
                             <div class="mt-6 flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    class="w-full border-amber-200 bg-white/80 text-amber-800 hover:bg-amber-50 sm:w-auto"
-                                    @click="backToSpin"
-                                >
-                                    Back To Spin
-                                </Button>
                                 <Button type="button" class="w-full cursor-pointer bg-amber-500 text-white hover:bg-amber-600 sm:w-auto">
-                                    Finish
+                                    Exist
                                 </Button>
                             </div>
                         </div>

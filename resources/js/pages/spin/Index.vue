@@ -5,6 +5,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type Compon
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import Input from '@/components/ui/input/Input.vue';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { demo as thanksDemo } from '@/routes/thanks';
 import { Briefcase, Coffee, Gift, Headphones, Package, ShoppingBag, Smartphone, Ticket, Trophy, Umbrella, Watch } from 'lucide-vue-next';
@@ -87,6 +88,7 @@ const segmentAngle = 360 / prizeSegments.length;
 const wheelRotation = ref(0);
 const isSpinning = ref(false);
 const spinDurationMs = 4200;
+const digitCodeModalOpen = ref(false);
 const resultModalOpen = ref(false);
 const selectedPrize = ref<PrizeSegment | null>(null);
 const spinCount = ref(0);
@@ -132,6 +134,12 @@ const updateViewportMode = () => {
     isDesktop.value = window.innerWidth >= 640;
 };
 
+// Open the digit code modal
+const openDigitCodeModal = () => {
+    digitCodeModalOpen.value = true;
+};
+
+// Spin the wheel
 const spinWheel = () => {
     if (isSpinning.value) return;
 
@@ -156,6 +164,18 @@ const spinWheel = () => {
     }, spinDurationMs);
 };
 
+// Confirm PIN code and start spinning
+const confirmPinCode = () => {
+    digitCodeModalOpen.value = false;
+
+    if (!digitCodeModalOpen.value) {
+        // In a real app, validate the PIN code here before allowing the spin.
+        // For this demo, we'll just proceed to spin the wheel.
+        spinWheel();
+    }
+};
+
+// Handle next action after showing prize result
 const handleResultNext = () => {
     if (selectedPrize.value) {
         localStorage.setItem(
@@ -201,6 +221,11 @@ const scrollToWinningGiftGuide = async () => {
 watch(resultModalOpen, async (isOpen, wasOpen) => {
     if (wasOpen && !isOpen && selectedPrize.value) {
         await scrollToWinningGiftGuide();
+    }
+
+    if (wasOpen && !isOpen) {
+        // go to next page after closing the result modal
+        router.visit(thanksDemo());
     }
 });
 
@@ -271,50 +296,52 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
 
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div class="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                            Spins: <span class="font-semibold text-amber-950">{{ spinCount }}</span>
-                        </div>
-
+                    <div class="flex justify-center">
                         <Button
                             type="button"
                             class="w-full cursor-pointer rounded-xl bg-amber-500 text-white shadow-md shadow-amber-200 hover:bg-amber-600 sm:w-auto"
                             :disabled="isSpinning"
-                            @click="spinWheel"
+                            @click="openDigitCodeModal"
                         >
                             {{ isSpinning ? 'Spinning...' : 'Spin Now' }}
                         </Button>
                     </div>
                 </CardContent>
             </Card>
-
-            <div class="mx-auto mt-2 w-full">
-                <Card class="rounded-2xl border border-white/60 bg-white/80 shadow-lg shadow-orange-100/70 backdrop-blur">
-                    <CardContent class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <p class="text-sm font-semibold text-slate-900">Continue To Next Page</p>
-                            <p class="text-xs text-slate-600">
-                                {{
-                                    selectedPrize
-                                        ? `Winning gift: ${selectedPrize.label}. You can continue now.`
-                                        : 'Spin first to unlock the next page.'
-                                }}
-                            </p>
-                        </div>
-
-                        <Button
-                            type="button"
-                            class="w-full cursor-pointer bg-amber-500 text-white hover:bg-amber-600 sm:w-auto"
-                            :disabled="!selectedPrize"
-                            @click="handleResultNext"
-                        >
-                            Next Page
-                        </Button>
-                    </CardContent>
-                </Card>
-            </div>
         </div>
 
+        <!-- Six digit Code modal  -->
+        <Dialog v-model:open="digitCodeModalOpen">
+            <DialogContent class="border border-amber-100 bg-white sm:max-w-md">
+                <DialogHeader class="space-y-2">
+                    <DialogTitle class="flex items-center gap-2 text-slate-900">
+                        <Trophy class="size-5 text-amber-500" />
+                        PIN Code
+                    </DialogTitle>
+                    <DialogDescription class="text-slate-600"> Enter the 6-digit PIN code to spin the wheel. </DialogDescription>
+                </DialogHeader>
+
+                <div>
+                    <!-- PIN Input  -->
+                    <Input
+                        id="pin-code-input"
+                        type="text"
+                        maxlength="6"
+                        placeholder="Enter 6-digit code"
+                        class="mx-auto block w-full rounded-md border border-slate-300 px-3 py-2 text-center text-lg font-medium focus:border-amber-500 focus:ring-1 focus:ring-amber-500 sm:text-xl"
+                    />
+                </div>
+
+                <DialogFooter class="gap-2">
+                    <Button type="button" variant="outline" class="w-full sm:w-auto" @click="digitCodeModalOpen = false">Close</Button>
+                    <Button type="button" class="w-full cursor-pointer bg-amber-500 text-white hover:bg-amber-600 sm:w-auto" @click="confirmPinCode">
+                        Confirm
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <!-- Wish result modal  -->
         <Dialog v-if="isDesktop" v-model:open="resultModalOpen">
             <DialogContent class="border border-amber-100 bg-white sm:max-w-md">
                 <DialogHeader class="space-y-2">
