@@ -25,11 +25,14 @@ class QrController extends Controller
         $qrs = Qr::query()
             ->withCount(['questions', 'items', 'formResponses', 'wishes'])
             ->latest('id')
-            ->get()
-            ->map(fn (Qr $qr) => [
+            ->paginate(15)
+            ->withQueryString();
+
+        return Inertia::render('admin/Qrs/Index', [
+            'qrs' => $this->paginated($qrs, fn (Qr $qr) => [
                 'id' => $qr->id,
                 'token' => $qr->token,
-                'public_url' => rtrim((string) config('app.url'), '/').'/qr='.$qr->token,
+                'public_url' => rtrim((string) config('app.url'), '/').'/qr?qr='.$qr->token,
                 'name' => $qr->name,
                 'status' => $qr->status,
                 'questions_count' => $qr->questions_count,
@@ -37,10 +40,7 @@ class QrController extends Controller
                 'responses_count' => $qr->form_responses_count,
                 'wishes_count' => $qr->wishes_count,
                 'created_at' => optional($qr->created_at)->toDateTimeString(),
-            ]);
-
-        return Inertia::render('admin/Qrs/Index', [
-            'qrs' => $qrs,
+            ]),
         ]);
     }
 
@@ -166,6 +166,7 @@ class QrController extends Controller
                 'id' => $item->id,
                 'name' => $item->name,
                 'sku' => $item->sku,
+                'color' => $item->color,
                 'balance_stock' => (float) ($item->balance_stock ?? 0),
             ])->values(),
             'stock_transactions' => $stockTransactions ? $this->paginated($stockTransactions, fn ($tx) => [

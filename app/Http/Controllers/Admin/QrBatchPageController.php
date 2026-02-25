@@ -18,7 +18,11 @@ class QrBatchPageController extends Controller
         $this->ensureAdmin();
 
         return Inertia::render('admin/qr-batches/Index', [
-            'defaults' => QrBatchSettingsNormalizer::defaults(),
+            'defaults' => [
+                'size_mode' => QrBatchSettingsNormalizer::defaults()['size_mode'],
+                'size_preset' => QrBatchSettingsNormalizer::defaults()['size_preset'],
+                'size_mm' => QrBatchSettingsNormalizer::defaults()['size_mm'],
+            ],
             'sizePresets' => QrBatchSettingsNormalizer::SIZE_PRESETS,
             'initialBatch' => $this->latestBatchPayload(),
         ]);
@@ -62,11 +66,6 @@ class QrBatchPageController extends Controller
             'id' => $batch->id,
             'status' => $batch->status,
             'base_url' => $batch->base_url,
-            'page_format' => $batch->page_format,
-            'margin_mm' => $batch->margin_mm,
-            'gap_mm' => $batch->gap_mm,
-            'cols' => $batch->cols,
-            'rows' => $batch->rows,
             'size_mode' => $batch->size_mode,
             'size_mm' => $batch->size_mm,
             'pdf_path' => $batch->pdf_path,

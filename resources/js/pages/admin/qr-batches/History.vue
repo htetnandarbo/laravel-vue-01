@@ -10,11 +10,6 @@ type BatchRow = {
     id: number;
     status: string;
     base_url: string;
-    page_format: 'A4' | 'LETTER';
-    margin_mm: number;
-    gap_mm: number;
-    cols: number;
-    rows: number;
     size_mode: 'preset' | 'custom';
     size_mm: number;
     download_available: boolean;
@@ -57,20 +52,20 @@ defineProps<{
                     <Table>
                         <TableHeader class="border-none bg-gray-100">
                             <TableRow class="border-none">
-                                <TableHead class="h-fit rounded-l-full py-3">ID</TableHead>
+                                <TableHead class="h-fit rounded-l-full py-3">No.</TableHead>
                                 <TableHead class="h-fit py-3">Status</TableHead>
-                                <TableHead class="h-fit py-3">Layout</TableHead>
+                                <TableHead class="h-fit py-3">QR Size</TableHead>
                                 <TableHead class="h-fit py-3">Base URL</TableHead>
                                 <TableHead class="h-fit py-3">Created</TableHead>
                                 <TableHead class="h-fit rounded-r-full py-3">Action</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow v-for="batch in batches.data" :key="batch.id">
-                                <TableCell class="h-fit rounded-l-full py-2">#{{ batch.id }}</TableCell>
+                            <TableRow v-for="(batch, index) in batches.data" :key="batch.id">
+                                <TableCell class="h-fit rounded-l-full py-2">{{ Number(index) + 1 }}</TableCell>
                                 <TableCell class="h-fit py-2 uppercase">{{ batch.status }}</TableCell>
                                 <TableCell class="h-fit py-2 whitespace-nowrap">
-                                    {{ batch.page_format }} / {{ batch.cols }}x{{ batch.rows }} / {{ batch.size_mm }}mm
+                                    {{ batch.size_mm }}mm
                                 </TableCell>
                                 <TableCell class="h-fit py-2">
                                     <code class="block max-w-[320px] truncate rounded bg-muted px-2 py-1 text-xs">

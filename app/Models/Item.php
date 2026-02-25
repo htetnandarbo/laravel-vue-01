@@ -10,6 +10,7 @@ class Item extends Model
 
     protected $casts = [
         'balance_stock' => 'decimal:4',
+        'color' => 'string',
     ];
 
     public function qr()

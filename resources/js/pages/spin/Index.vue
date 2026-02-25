@@ -8,7 +8,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import Input from '@/components/ui/input/Input.vue';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { demo as thanksDemo } from '@/routes/thanks';
-import { Briefcase, Coffee, Gift, Headphones, Package, ShoppingBag, Smartphone, Ticket, Trophy, Umbrella, Watch } from 'lucide-vue-next';
+import { Gift, Trophy } from 'lucide-vue-next';
+
+type PrizeRow = {
+    id: number;
+    name: string;
+    color?: string | null;
+};
+
+const props = defineProps<{ qrToken?: string | null; prizes?: PrizeRow[] | null }>();
 
 const isMobile = ref(false);
 
@@ -35,56 +43,34 @@ type PrizeSegment = {
     centerAngle?: number;
 };
 
-const prizeSegments: PrizeSegment[] = [
-    {
-        label: 'Umbrella',
-        wheelLabel: 'Umbrella',
-        color: '#f59e0b',
-        textColor: '#451a03',
-        icon: Umbrella,
-        imageUrl: '/demo-prizes/umbrella.png',
-        centerAngle: 0,
-    },
-    {
-        label: 'Shopping Bag',
-        wheelLabel: 'Bag',
-        color: '#fcd34d',
-        textColor: '#78350f',
-        icon: ShoppingBag,
-        imageUrl: '/demo-prizes/shopping-bag.png',
-    },
-    {
-        label: 'Coffee Voucher',
-        wheelLabel: 'Coffee',
-        color: '#fb7185',
-        textColor: '#4c0519',
-        icon: Coffee,
-        imageUrl: '/demo-prizes/coffee-voucher.png',
-    },
-    { label: 'Gift Box', wheelLabel: 'Gift', color: '#c084fc', textColor: '#3b0764', icon: Gift, imageUrl: '/demo-prizes/gift-box.png' },
-    { label: 'Headphones', wheelLabel: 'Audio', color: '#60a5fa', textColor: '#082f49', icon: Headphones, imageUrl: '/demo-prizes/headphones.png' },
-    { label: 'Travel Bag', wheelLabel: 'Travel', color: '#34d399', textColor: '#022c22', icon: Briefcase, imageUrl: '/demo-prizes/travel-bag.png' },
-    {
-        label: 'Smartphone Stand',
-        wheelLabel: 'Stand',
-        color: '#fdba74',
-        textColor: '#431407',
-        icon: Smartphone,
-        imageUrl: '/demo-prizes/smartphone-stand.png',
-    },
-    {
-        label: 'Golden Ticket',
-        wheelLabel: 'Ticket',
-        color: '#f9a8d4',
-        textColor: '#500724',
-        icon: Ticket,
-        imageUrl: '/demo-prizes/golden-ticket.png',
-    },
-    { label: 'Premium Watch', wheelLabel: 'Watch', color: '#93c5fd', textColor: '#172554', icon: Watch, imageUrl: '/demo-prizes/premium-watch.png' },
-    { label: 'Mystery Box', wheelLabel: 'Mystery', color: '#a7f3d0', textColor: '#064e3b', icon: Package, imageUrl: '/demo-prizes/mystery-box.png' },
-];
+const prizePalette = ['#f59e0b', '#fcd34d', '#fb7185', '#c084fc', '#60a5fa', '#34d399', '#fdba74', '#f9a8d4', '#93c5fd', '#a7f3d0'];
+const textPalette = ['#451a03', '#78350f', '#4c0519', '#3b0764', '#082f49', '#022c22', '#431407', '#500724', '#172554', '#064e3b'];
 
-const segmentAngle = 360 / prizeSegments.length;
+const prizeSegments = computed<PrizeSegment[]>(() => {
+    const rows = (props.prizes ?? []).filter((prize) => String(prize.name || '').trim() !== '');
+
+    if (rows.length === 0) {
+        return [
+            {
+                label: 'No Prize Items',
+                wheelLabel: 'No Prize',
+                color: '#e5e7eb',
+                textColor: '#374151',
+                icon: Gift,
+            },
+        ];
+    }
+
+    return rows.map((prize, index) => ({
+        label: prize.name,
+        wheelLabel: prize.name,
+        color: prize.color || prizePalette[index % prizePalette.length],
+        textColor: textPalette[index % textPalette.length],
+        icon: Gift,
+    }));
+});
+
+const segmentAngle = computed(() => 360 / Math.max(1, prizeSegments.value.length));
 const wheelRotation = ref(0);
 const isSpinning = ref(false);
 const spinDurationMs = 4200;
@@ -99,9 +85,9 @@ let spinTimeoutId: number | null = null;
 
 const wheelGradient = computed(() => {
     const stops = prizeSegments
-        .map((segment, index) => {
-            const start = index * segmentAngle;
-            const end = start + segmentAngle;
+        .value.map((segment, index) => {
+            const start = index * segmentAngle.value;
+            const end = start + segmentAngle.value;
             return `${segment.color} ${start}deg ${end}deg`;
         })
         .join(', ');
@@ -110,10 +96,10 @@ const wheelGradient = computed(() => {
 });
 
 const numberedPrizeSegments = computed(() =>
-    prizeSegments.map((segment, index) => ({
+    prizeSegments.value.map((segment, index) => ({
         ...segment,
         number: index + 1,
-        centerAngle: index * segmentAngle + segmentAngle / 2,
+        centerAngle: index * segmentAngle.value + segmentAngle.value / 2,
     })),
 );
 
@@ -125,10 +111,10 @@ const normalizedRotation = computed(() => {
 const currentPointerIndex = computed(() => {
     // Pointer is fixed at top while the wheel rotates clockwise.
     const pointerAngleOnWheel = (360 - normalizedRotation.value + 360) % 360;
-    return Math.floor(pointerAngleOnWheel / segmentAngle) % prizeSegments.length;
+    return Math.floor(pointerAngleOnWheel / segmentAngle.value) % prizeSegments.value.length;
 });
 
-const currentPointerPrize = computed(() => prizeSegments[currentPointerIndex.value]);
+const currentPointerPrize = computed(() => prizeSegments.value[currentPointerIndex.value]);
 
 const updateViewportMode = () => {
     isDesktop.value = window.innerWidth >= 640;
@@ -190,7 +176,7 @@ const handleResultNext = () => {
 
     showScrollTutorial.value = false;
     resultModalOpen.value = false;
-    router.visit(thanksDemo());
+    router.visit(props.qrToken ? thanksDemo({ query: { qr: props.qrToken } }) : thanksDemo());
 };
 
 
@@ -217,7 +203,7 @@ watch(resultModalOpen, async (isOpen, wasOpen) => {
 
     if (wasOpen && !isOpen) {
         // go to next page after closing the result modal
-        router.visit(thanksDemo());
+        router.visit(props.qrToken ? thanksDemo({ query: { qr: props.qrToken } }) : thanksDemo());
     }
 });
 

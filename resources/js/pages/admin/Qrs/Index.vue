@@ -7,6 +7,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import InputError from '@/components/InputError.vue';
+import Paginator from '@/components/Paginator.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -32,7 +33,15 @@ type QrRow = {
     created_at: string | null;
 };
 
-const props = defineProps<{ qrs: QrRow[] }>();
+type PaginatedQrs = {
+    data: QrRow[];
+    meta?: {
+        total?: number;
+        [key: string]: unknown;
+    } | null;
+};
+
+const props = defineProps<{ qrs: PaginatedQrs }>();
 
 const form = useForm({
     name: '',
@@ -40,7 +49,7 @@ const form = useForm({
 });
 const qEdit = reactive<Record<number, { name: string; status: QrRow['status'] }>>(
     Object.fromEntries(
-        props.qrs.map((qr) => [
+        props.qrs.data.map((qr) => [
             qr.id,
             {
                 name: qr.name ?? '',
@@ -130,12 +139,12 @@ const copyUrl = async (url: string) => {
                 <CardContent class="pt-6">
                 <div class="mb-3 flex items-center justify-between">
                     <h2 class="text-lg font-semibold">QR List</h2>
-                    <span class="text-sm text-muted-foreground">{{ qrs.length }} total</span>
+                    <span class="text-sm text-muted-foreground">{{ qrs.meta?.total ?? qrs.data.length }} total</span>
                 </div>
                 <Table>
                     <TableHeader class="border-none bg-gray-100">
                         <TableRow class="border-none">
-                            <TableHead class="h-fit rounded-l-full py-3">ID</TableHead>
+                            <TableHead class="h-fit rounded-l-full py-3">No.</TableHead>
                             <TableHead class="h-fit py-3">Name</TableHead>
                             <TableHead class="h-fit py-3">Token</TableHead>
                             <TableHead class="h-fit py-3">Status</TableHead>
@@ -145,8 +154,8 @@ const copyUrl = async (url: string) => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        <TableRow v-for="qr in qrs" :key="qr.id">
-                                <TableCell class="h-fit rounded-l-full py-2">{{ qr.id }}</TableCell>
+                        <TableRow v-for="(qr, index) in qrs.data" :key="qr.id">
+                                <TableCell class="h-fit rounded-l-full py-2">{{ Number(index) + 1 }}</TableCell>
                                 <TableCell class="h-fit py-2">
                                     <Input v-model="qEdit[qr.id].name" placeholder="Optional QR name" />
                                 </TableCell>
@@ -196,11 +205,12 @@ const copyUrl = async (url: string) => {
                                     </DropdownMenu>
                                 </TableCell>
                             </TableRow>
-                            <TableRow v-if="qrs.length === 0">
+                            <TableRow v-if="qrs.data.length === 0">
                                 <TableCell colspan="7" class="py-6 text-center text-muted-foreground">No QRs created yet.</TableCell>
                             </TableRow>
                     </TableBody>
                 </Table>
+                <Paginator :meta="qrs.meta" />
                 </CardContent>
             </Card>
         </div>

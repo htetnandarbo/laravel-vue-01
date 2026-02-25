@@ -15,14 +15,80 @@ use App\Http\Controllers\PublicQrController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WelcomeController;
+use App\Models\Qr;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Route::get('/', [WelcomeController::class, 'index'])->name('home');
-Route::get('/', fn() => Inertia::render('survey/Index'))->name('survey.demo');
-Route::get('/wish-demo', fn() => Inertia::render('wish/Index'))->name('wish.demo');
-Route::get('/spin-demo', fn() => Inertia::render('spin/Index'))->name('spin.demo');
-Route::get('/thanks-demo', fn() => Inertia::render('thanks/Index'))->name('thanks.demo');
+$resolveActiveQrToken = function (Request $request): ?string {
+    $token = trim((string) ($request->query('qr') ?? $request->query('token') ?? ''));
+    if ($token === '') {
+        return null;
+    }
+
+    return Qr::query()->where('token', $token)->where('status', 'active')->exists() ? $token : null;
+};
+
+$qrRequiredPage = function (string $message = 'You need a valid QR link to enter this page.') {
+    return Inertia::render('Public/QrRequired', [
+        'title' => 'QR Required',
+        'message' => $message,
+    ]);
+};
+
+Route::get('/', function (Request $request) use ($resolveActiveQrToken, $qrRequiredPage) {
+    $token = $resolveActiveQrToken($request);
+
+    if (! $token) {
+        return $qrRequiredPage();
+    }
+
+    return redirect()->route('public.qr.entry', ['qr' => $token]);
+})->name('survey.demo');
+
+Route::get('/wish-demo', function (Request $request) use ($resolveActiveQrToken, $qrRequiredPage) {
+    $token = $resolveActiveQrToken($request);
+
+    if (! $token) {
+        return $qrRequiredPage();
+    }
+
+    return Inertia::render('wish/Index', ['qrToken' => $token]);
+})->name('wish.demo');
+
+Route::get('/spin-demo', function (Request $request) use ($resolveActiveQrToken, $qrRequiredPage) {
+    $token = $resolveActiveQrToken($request);
+
+    if (! $token) {
+        return $qrRequiredPage();
+    }
+
+    $qr = Qr::query()
+        ->where('token', $token)
+        ->where('status', 'active')
+        ->with('items')
+        ->first();
+
+    return Inertia::render('spin/Index', [
+        'qrToken' => $token,
+        'prizes' => $qr?->items->map(fn ($item) => [
+            'id' => $item->id,
+            'name' => $item->name,
+            'color' => $item->color,
+        ])->values()->all() ?? [],
+    ]);
+})->name('spin.demo');
+
+Route::get('/thanks-demo', function (Request $request) use ($resolveActiveQrToken, $qrRequiredPage) {
+    $token = $resolveActiveQrToken($request);
+
+    if (! $token) {
+        return $qrRequiredPage();
+    }
+
+    return Inertia::render('thanks/Index', ['qrToken' => $token]);
+})->name('thanks.demo');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -75,6 +141,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::patch('/wishes/{wish}', [AdminWishController::class, 'update'])->name('wishes.update');
 });
 
+Route::get('/qr', [PublicQrController::class, 'entry'])->name('public.qr.entry');
+Route::get('/qr={token}', fn (string $token) => redirect()->route('public.qr.entry', ['qr' => $token]));
 Route::get('/qr/{token}', [PublicQrController::class, 'show'])->name('public.qr.show');
 Route::post('/qr/{token}/submit', [PublicQrController::class, 'submit'])->name('public.qr.submit');
 Route::post('/qr/{token}/wish', [PublicQrController::class, 'wish'])->name('public.qr.wish');

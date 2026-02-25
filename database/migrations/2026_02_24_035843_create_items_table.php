@@ -16,6 +16,7 @@ return new class extends Migration
             // FK is added in a later migration to avoid ordering issues if qrs table is created after items.
             $table->foreignId('qr_id');
             $table->string('name');
+            $table->string('color', 7)->nullable();
             $table->decimal('balance_stock', 15, 4)->default(0);
             $table->timestamps();
         });

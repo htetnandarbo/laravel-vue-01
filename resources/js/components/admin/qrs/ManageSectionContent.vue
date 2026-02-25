@@ -336,7 +336,7 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                         <Table>
                             <TableHeader class="border-none bg-gray-100">
                                 <TableRow class="border-none">
-                                    <TableHead class="h-fit rounded-l-full py-3">ID</TableHead>
+                                    <TableHead class="h-fit rounded-l-full py-3">No.</TableHead>
                                     <TableHead class="h-fit py-3">Item</TableHead>
                                     <TableHead class="h-fit py-3">Type</TableHead>
                                     <TableHead class="h-fit py-3">Qty</TableHead>
@@ -345,8 +345,8 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                <TableRow v-for="tx in pagedRows(qr.stock_transactions)" :key="tx.id">
-                                    <TableCell class="h-fit rounded-l-full py-2">{{ tx.id }}</TableCell>
+                                <TableRow v-for="(tx, index) in pagedRows(qr.stock_transactions)" :key="tx.id">
+                                    <TableCell class="h-fit rounded-l-full py-2">{{ Number(index) + 1 }}</TableCell>
                                     <TableCell class="h-fit py-2">{{ tx.item_name || '-' }}</TableCell>
                                     <TableCell class="h-fit py-2 uppercase">{{ tx.type }}</TableCell>
                                     <TableCell class="h-fit py-2">{{ tx.quantity }}</TableCell>
@@ -366,7 +366,7 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                     <Table>
                         <TableHeader class="border-none bg-gray-100">
                             <TableRow class="border-none">
-                                <TableHead class="h-fit rounded-l-full py-3">ID</TableHead>
+                                <TableHead class="h-fit rounded-l-full py-3">No.</TableHead>
                                 <TableHead class="h-fit py-3">Status</TableHead>
                                 <TableHead class="h-fit py-3">User</TableHead>
                                 <TableHead class="h-fit py-3">Preview</TableHead>
@@ -375,8 +375,8 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow v-for="r in pagedRows(qr.responses)" :key="r.id">
-                                <TableCell class="h-fit rounded-l-full py-2">#{{ r.id }}</TableCell>
+                            <TableRow v-for="(r, index) in pagedRows(qr.responses)" :key="r.id">
+                                <TableCell class="h-fit rounded-l-full py-2">{{ Number(index) + 1 }}</TableCell>
                                 <TableCell class="h-fit py-2">{{ r.status }}</TableCell>
                                 <TableCell class="h-fit py-2">{{ r.user_identifier || '-' }}</TableCell>
                                 <TableCell class="h-fit py-2">
@@ -407,7 +407,7 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                     <Table>
                         <TableHeader class="border-none bg-gray-100">
                             <TableRow class="border-none">
-                                <TableHead class="h-fit rounded-l-full py-3">ID</TableHead>
+                                <TableHead class="h-fit rounded-l-full py-3">No.</TableHead>
                                 <TableHead class="h-fit py-3">Status</TableHead>
                                 <TableHead class="h-fit py-3">Message</TableHead>
                                 <TableHead class="h-fit py-3">Created</TableHead>
@@ -415,8 +415,8 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow v-for="wish in pagedRows(qr.wishes)" :key="wish.id">
-                                <TableCell class="h-fit rounded-l-full py-2">#{{ wish.id }}</TableCell>
+                            <TableRow v-for="(wish, index) in pagedRows(qr.wishes)" :key="wish.id">
+                                <TableCell class="h-fit rounded-l-full py-2">{{ Number(index) + 1 }}</TableCell>
                                 <TableCell class="h-fit py-2">{{ wish.status }}</TableCell>
                                 <TableCell class="h-fit py-2">
                                     <p class="max-w-xl whitespace-pre-wrap text-sm">{{ wish.message }}</p>
@@ -460,7 +460,7 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                         <Table>
                             <TableHeader class="border-none bg-gray-100">
                                 <TableRow class="border-none">
-                                    <TableHead class="h-fit rounded-l-full py-3">ID</TableHead>
+                                    <TableHead class="h-fit rounded-l-full py-3">No.</TableHead>
                                     <TableHead class="h-fit py-3">PIN</TableHead>
                                     <TableHead class="h-fit py-3">Used</TableHead>
                                     <TableHead class="h-fit rounded-r-full py-3">Created</TableHead>

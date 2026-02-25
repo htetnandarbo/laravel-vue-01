@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Link } from '@inertiajs/vue3';
 
-const props = defineProps<{
+defineProps<{
     qr: {
         id: number;
         name: string | null;
@@ -26,6 +26,7 @@ const navItems = [
 
 <template>
     <div class="px-4 py-6">
+        
         <Heading :title="qr.name || `QR #${qr.id}`" :description="`Token: ${qr.token} | Status: ${qr.status}`" />
 
         <div class="flex flex-col lg:flex-row lg:space-x-12">

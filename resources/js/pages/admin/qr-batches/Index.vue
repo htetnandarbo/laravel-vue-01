@@ -11,13 +11,8 @@ import { toast } from 'vue-sonner';
 import { reactive, ref, watch } from 'vue';
 
 type Defaults = {
-    page_format: 'A4' | 'LETTER';
-    margin_mm: number;
-    gap_mm: number;
-    cols: number;
-    rows: number;
     size_mode: 'preset' | 'custom';
-    size_preset: 'S' | 'M' | 'L' | 'XL';
+    size_preset: 'S' | 'M' | 'L';
     size_mm: number;
 };
 
@@ -25,11 +20,6 @@ type BatchPayload = {
     id: number;
     status: string;
     base_url: string;
-    page_format: 'A4' | 'LETTER';
-    margin_mm: number;
-    gap_mm: number;
-    cols: number;
-    rows: number;
     size_mode: 'preset' | 'custom';
     size_mm: number;
     pdf_path: string | null;
@@ -47,17 +37,12 @@ type BatchPayload = {
 
 const props = defineProps<{
     defaults: Defaults;
-    sizePresets: Record<'S' | 'M' | 'L' | 'XL', number>;
+    sizePresets: Record<'S' | 'M' | 'L', number>;
     initialBatch: BatchPayload | null;
 }>();
 
 const form = reactive({
     base_url: '',
-    page_format: props.defaults.page_format,
-    margin_mm: props.defaults.margin_mm,
-    gap_mm: props.defaults.gap_mm,
-    cols: props.defaults.cols,
-    rows: props.defaults.rows,
     size_mode: props.defaults.size_mode,
     size_preset: props.defaults.size_preset,
     size_mm: props.defaults.size_mm,
@@ -96,10 +81,6 @@ const submit = async () => {
             credentials: 'same-origin',
             body: JSON.stringify({
                 ...form,
-                margin_mm: Number(form.margin_mm),
-                gap_mm: Number(form.gap_mm),
-                cols: Number(form.cols),
-                rows: Number(form.rows),
                 size_mm: Number(form.size_mm),
             }),
         });
@@ -151,63 +132,19 @@ const submit = async () => {
                             <InputError :message="fieldErrors.base_url?.[0]" />
                         </div>
 
-                        <div class="grid gap-4 sm:grid-cols-2">
-                            <div class="grid gap-2">
-                                <Label>Page Format</Label>
-                                <Select v-model="form.page_format">
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select page format" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="A4">A4</SelectItem>
-                                        <SelectItem value="LETTER">LETTER</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <InputError :message="fieldErrors.page_format?.[0]" />
-                            </div>
-
-                            <div class="grid gap-2">
-                                <Label>Size Mode</Label>
-                                <RadioGroup v-model="form.size_mode" class="grid grid-cols-2 gap-2">
-                                    <label class="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm">
-                                        <RadioGroupItem id="size-mode-preset" value="preset" />
-                                        <span>Preset</span>
-                                    </label>
-                                    <label class="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm">
-                                        <RadioGroupItem id="size-mode-custom" value="custom" />
-                                        <span>Custom</span>
-                                    </label>
-                                </RadioGroup>
-                                <InputError :message="fieldErrors.size_mode?.[0]" />
-                            </div>
-                        </div>
-
-                        <div class="grid gap-4 sm:grid-cols-2">
-                            <div class="grid gap-2">
-                                <Label for="margin_mm">Margin (mm)</Label>
-                                <Input id="margin_mm" v-model="form.margin_mm" type="number" min="0" step="0.5" />
-                                <InputError :message="fieldErrors.margin_mm?.[0]" />
-                            </div>
-
-                            <div class="grid gap-2">
-                                <Label for="gap_mm">Gap (mm)</Label>
-                                <Input id="gap_mm" v-model="form.gap_mm" type="number" min="0" step="0.5" />
-                                <InputError :message="fieldErrors.gap_mm?.[0]" />
-                            </div>
-                        </div>
-
-                        <div class="grid gap-4 sm:grid-cols-2">
-                            <div class="grid gap-2">
-                                <Label for="cols">Columns</Label>
-                                <Input id="cols" v-model="form.cols" type="number" min="1" step="1" />
-                                <InputError :message="fieldErrors.cols?.[0]" />
-                            </div>
-
-                            <div class="grid gap-2">
-                                <Label for="rows">Rows</Label>
-                                <Input id="rows" v-model="form.rows" type="number" min="1" step="1" />
-                                <InputError :message="fieldErrors.rows?.[0]" />
-                            </div>
+                        <div class="grid gap-2">
+                            <Label>Size Mode</Label>
+                            <RadioGroup v-model="form.size_mode" class="grid grid-cols-2 gap-2">
+                                <label class="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm">
+                                    <RadioGroupItem id="size-mode-preset" value="preset" />
+                                    <span>Preset</span>
+                                </label>
+                                <label class="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm">
+                                    <RadioGroupItem id="size-mode-custom" value="custom" />
+                                    <span>Custom</span>
+                                </label>
+                            </RadioGroup>
+                            <InputError :message="fieldErrors.size_mode?.[0]" />
                         </div>
 
                         <div v-if="form.size_mode === 'preset'" class="grid gap-2">
@@ -220,7 +157,6 @@ const submit = async () => {
                                     <SelectItem value="S">S (25mm)</SelectItem>
                                     <SelectItem value="M">M (30mm)</SelectItem>
                                     <SelectItem value="L">L (40mm)</SelectItem>
-                                    <SelectItem value="XL">XL (50mm)</SelectItem>
                                 </SelectContent>
                             </Select>
                             <p class="text-xs text-muted-foreground">Effective size: {{ form.size_mm }}mm</p>
@@ -229,8 +165,8 @@ const submit = async () => {
 
                         <div v-else class="grid gap-2">
                             <Label for="size_mm">Custom Size (mm)</Label>
-                            <Input id="size_mm" v-model="form.size_mm" type="number" min="18" max="80" step="0.5" />
-                            <p class="text-xs text-muted-foreground">Allowed range: 18mm to 80mm.</p>
+                            <Input id="size_mm" v-model="form.size_mm" type="number" min="18" max="43.5" step="0.5" />
+                            <p class="text-xs text-muted-foreground">Allowed range: 18mm to 43.5mm (fits fixed A4 layout).</p>
                             <InputError :message="fieldErrors.size_mm?.[0]" />
                         </div>
 
@@ -242,7 +178,7 @@ const submit = async () => {
                             <Button type="submit" :disabled="submitting" class="cursor-pointer bg-amber-500 text-white hover:bg-amber-600">
                                 {{ submitting ? 'Generating...' : 'Generate QR' }}
                             </Button>
-                            <span class="text-xs text-muted-foreground">Defaults: A4, margin 8mm, gap 4mm, 4x6 grid.</span>
+                            <span class="text-xs text-muted-foreground">Layout uses fixed defaults. Only QR size is configurable.</span>
                         </CardFooter>
                     </form>
                 </CardContent>
@@ -259,8 +195,8 @@ const submit = async () => {
                         <span class="font-medium">#{{ recentBatch.id }}</span>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <span class="text-muted-foreground">Layout</span>
-                        <span class="font-medium">{{ recentBatch.page_format }} / {{ recentBatch.cols }}x{{ recentBatch.rows }} / {{ recentBatch.size_mm }}mm</span>
+                        <span class="text-muted-foreground">QR Size</span>
+                        <span class="font-medium">{{ recentBatch.size_mm }}mm</span>
                     </div>
                     <div class="grid gap-2">
                         <span class="text-muted-foreground">Base URL</span>

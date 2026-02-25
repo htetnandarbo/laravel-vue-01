@@ -18,6 +18,7 @@ const prize = ref<StoredPrize>({
     color: '#f59e0b',
     imageUrl: null,
 });
+const props = defineProps<{ qrToken?: string | null }>();
 
 onMounted(() => {
     try {
@@ -38,7 +39,7 @@ onMounted(() => {
 });
 
 const backToSpin = () => {
-    router.visit(spinDemo());
+    router.visit(props.qrToken ? spinDemo({ query: { qr: props.qrToken } }) : spinDemo());
 };
 </script>
 
