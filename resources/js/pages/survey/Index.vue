@@ -4,13 +4,9 @@ import { computed, onBeforeUnmount, reactive, ref } from 'vue';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { demo as wishDemo } from '@/routes/wish';
-import { ImagePlus, Trash2, UploadCloud } from 'lucide-vue-next';
 
 type SurveyForm = {
     fullName: string;
@@ -120,58 +116,22 @@ onBeforeUnmount(() => {
 
                 <CardContent class="space-y-6 bg-white">
                     <div class="space-y-6">
-                        <div class="grid gap-2">
-                            <Label for="referenceImage">ပုံထည့်ရန်</Label>
-                            <div class="rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50/60 p-4">
-                                <label for="referenceImage" class="group block cursor-pointer transition hover:opacity-95">
-                                    <div class="flex items-start gap-3">
-                                        <div class="rounded-xl bg-white p-2 text-amber-600 shadow-sm">
-                                            <ImagePlus class="size-5" />
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div class="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                                                <UploadCloud class="size-4 text-amber-600" />
-                                                Add Image
-                                            </div>
-                                            <p class="mt-2 text-xs font-medium text-amber-700">
-                                                {{
-                                                    referenceImageFile ? `Selected: ${referenceImageFile.name}` : 'Click here to choose an image file'
-                                                }}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div v-if="referenceImagePreviewUrl" class="mt-3 overflow-hidden rounded-xl border bg-white">
-                                        <img :src="referenceImagePreviewUrl" alt="Reference preview" class="max-h-48 w-full object-cover" />
-                                    </div>
-                                </label>
-
-                                <div v-if="referenceImageFile" class="mt-3 flex justify-end">
-                                    <button
-                                        type="button"
-                                        class="inline-flex items-center gap-2 rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50"
-                                        @click="clearReferenceImage"
-                                    >
-                                        <Trash2 class="size-3.5" />
-                                        Remove image
-                                    </button>
-                                </div>
-                            </div>
-                            <Input
-                                id="referenceImage"
-                                ref="referenceImageInput"
-                                type="file"
-                                accept="image/*"
-                                class="hidden"
-                                @change="onReferenceImageChange"
+                        <div>
+                            <img
+                                src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80"
+                                alt="Survey Header"
+                                class="h-48 w-full rounded-lg object-cover"
                             />
                         </div>
-
                         <div class="grid gap-2">
                             <Label for="fullName">သင့်နာမည် ကဘာလဲ? </Label>
                             <Input id="fullName" v-model="form.fullName" type="text" placeholder="မစုမွန်" />
                         </div>
-
+                        <div class="grid gap-2">
+                            <Label for="fullName">သင့်ဖုန်းနံပါတ် ကဘာလဲ? </Label>
+                            <Input id="fullName" v-model="form.fullName" type="text" placeholder="09465893467" />
+                        </div>
+                        <!--
                         <div class="grid gap-2">
                             <Label for="favoriteProduct">သင်အကြိုက်ဆုံး ပစ္စည်းကဘယ်လိုပစ္စည်းလဲ? </Label>
                             <Input id="favoriteProduct" v-model="form.favoriteProduct" type="text" placeholder="Wireless earbuds" />
@@ -253,6 +213,7 @@ onBeforeUnmount(() => {
                             <Label for="improvements">ကျွနိုပ်တို့ ဘာများ Improve လုပ်ရမလဲ?</Label>
                             <Textarea id="improvements" v-model="form.improvements" rows="4" placeholder="Message..." />
                         </div>
+                        -->
                     </div>
 
                     <div class="flex flex-col-reverse gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
