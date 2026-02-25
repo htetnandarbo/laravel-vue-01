@@ -48,7 +48,7 @@ class QrBatchSettingsNormalizer
         );
 
         return [
-            'quantity' => (int) $validated['quantity'],
+            'quantity' => 1,
             'status' => 'pending',
             'base_url' => $baseUrl,
             'page_format' => $pageFormat,

@@ -173,14 +173,6 @@ const handleResultNext = () => {
     router.visit(thanksDemo());
 };
 
-const setGuideItemRef = (label: string, el: Element | null) => {
-    if (el instanceof HTMLElement) {
-        guideItemRefs.set(label, el);
-        return;
-    }
-
-    guideItemRefs.delete(label);
-};
 
 const scrollToWinningGiftGuide = async () => {
     if (!selectedPrize.value) return;

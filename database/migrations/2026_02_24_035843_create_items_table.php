@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('items', function (Blueprint $table) {
             $table->id();
+            // FK is added in a later migration to avoid ordering issues if qrs table is created after items.
+            $table->foreignId('qr_id');
             $table->string('name');
-            $table->string('image')->nullable();
+            $table->decimal('balance_stock', 15, 4)->default(0);
             $table->timestamps();
         });
     }
@@ -24,6 +26,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('items');
+        Schema::enableForeignKeyConstraints();
     }
 };

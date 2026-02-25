@@ -24,7 +24,6 @@ class StoreQrBatchRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'quantity' => ['required', 'integer', 'min:1'],
             'base_url' => ['required', 'string', 'max:2048', 'starts_with:http://,https://'],
             'page_format' => ['nullable', Rule::in(['A4', 'LETTER'])],
             'margin_mm' => ['nullable', 'numeric', 'min:0', 'max:50'],
