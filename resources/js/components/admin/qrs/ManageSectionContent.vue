@@ -213,7 +213,7 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                                 <InputError :message="qForm.errors.sort_order" />
                             </div>
                             <div class="mt-6 flex items-center gap-2 text-sm">
-                                <Checkbox :checked="qForm.is_required" @update:checked="setChecked((v) => (qForm.is_required = v))" />
+                                <Checkbox :checked="qForm.is_required" v-model="qForm.is_required" />
                                 <Label class="text-sm font-normal">Required</Label>
                             </div>
                         </div>
@@ -259,7 +259,7 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                                 </TableCell>
                                 <TableCell class="h-fit py-2">
                                     <div class="flex items-center gap-2 text-sm">
-                                        <Checkbox :checked="qEdit[q.id].is_required" @update:checked="setChecked((v) => (qEdit[q.id].is_required = v))" />
+                                        <Checkbox :checked="qEdit[q.id].is_required" v-model="qEdit[q.id].is_required" />
                                     </div>
                                 </TableCell>
                                 <TableCell class="h-fit py-2">

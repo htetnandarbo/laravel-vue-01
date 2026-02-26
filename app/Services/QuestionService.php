@@ -33,7 +33,6 @@ class QuestionService
                 ->values()
                 ->all();
         }
-
         return [
             'label' => $data['label'],
             'question_text' => $data['label'],
