@@ -22,8 +22,6 @@ class PublicSubmissionService
         return DB::transaction(function () use ($qr, $payload, $normalizedAnswers) {
             $response = FormResponse::query()->create([
                 'qr_id' => $qr->id,
-                'user_identifier' => $payload['user_identifier'] ?? null,
-                'status' => 'new',
             ]);
 
             foreach ($normalizedAnswers as $questionId => $value) {

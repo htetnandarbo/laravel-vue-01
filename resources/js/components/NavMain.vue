@@ -14,7 +14,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { ChevronRight } from 'lucide-vue-next';
 
 defineProps<{
-    items: any;
+    items?: any;
     dashboardMenu: any;
 }>();
 

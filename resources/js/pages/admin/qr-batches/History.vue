@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Link } from '@inertiajs/vue3';
+import { PlusIcon } from 'lucide-vue-next';
 
 type BatchRow = {
     id: number;
@@ -40,16 +41,16 @@ defineProps<{
 <template>
     <AppLayout>
         <div class="m-5 grid gap-5">
-            <Card>
-                <CardHeader class="flex flex-row items-center justify-between gap-3 space-y-0">
-                    <div>
-                        <CardTitle>Generated QRs</CardTitle>
-                        <CardDescription>Previously generated QR PDFs. Download again anytime.</CardDescription>
-                    </div>
-                    <Button as-child variant="outline">
-                        <Link href="/admin/qr-batches">Back to Generator</Link>
+            <div class="flex justify-end">
+                <Link href="/admin/qr-batches">
+                    <Button
+                        class="cursor-pointer rounded-2xl bg-amber-500 text-white shadow-sm shadow-amber-50 transition-all hover:bg-amber-600 hover:shadow-sm hover:shadow-amber-300 sm:w-auto"
+                        ><PlusIcon></PlusIcon>Add New
                     </Button>
-                </CardHeader>
+                </Link>
+            </div>
+            <Card>
+                
                 <CardContent class="grid gap-4">
                     <BasicSearch url="/admin/qr-batches/history" :q="search ?? ''" placeholder="Search generated QRs..." />
                     <Table>

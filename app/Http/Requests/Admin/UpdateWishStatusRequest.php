@@ -15,7 +15,7 @@ class UpdateWishStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', Rule::in(['new', 'seen', 'done'])],
+            'status' => ['required', Rule::in(['accepted', 'rejected'])],
         ];
     }
 }

@@ -28,13 +28,11 @@ const formatValue = (value: string | null) => {
                     <div>
                         <h1 class="text-xl font-semibold">Response #{{ response.id }}</h1>
                         <p class="text-sm text-muted-foreground">
-                            QR: {{ response.qr?.name || response.qr?.token || '-' }} | Status: {{ response.status }} | User: {{ response.user_identifier || '-' }}
+                            QR: {{ response.qr?.name || response.qr?.token || '-' }}
                         </p>
                     </div>
                     <div class="flex gap-2">
                         <Link v-if="response.qr?.id" :href="`/admin/qrs/${response.qr.id}/responses`" class="text-sm text-amber-600 hover:underline">Back to QR</Link>
-                        <Button type="button" variant="outline" size="sm" @click="setStatus('accepted')">Accept</Button>
-                        <Button type="button" variant="outline" size="sm" @click="setStatus('rejected')">Reject</Button>
                     </div>
                 </div>
                 </CardContent>

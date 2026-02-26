@@ -89,12 +89,6 @@ const nextStep = () => {
                             />
                         </div>
 
-                        <div class="grid gap-2">
-                            <Label for="user_identifier">User Identifier (optional)</Label>
-                            <Input id="user_identifier" v-model="form.user_identifier" type="text" placeholder="Phone / Name / ID" />
-                            <InputError :message="form.errors.user_identifier" />
-                        </div>
-
                         <div v-for="question in questions" :key="question.id" class="grid gap-2">
                             <Label>
                                 {{ question.label }}

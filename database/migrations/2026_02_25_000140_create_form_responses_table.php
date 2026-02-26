@@ -11,8 +11,6 @@ return new class extends Migration
         Schema::create('form_responses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('qr_id')->constrained('qrs')->cascadeOnDelete();
-            $table->string('user_identifier')->nullable()->index();
-            $table->enum('status', ['new', 'accepted', 'rejected'])->default('new')->index();
             $table->timestamps();
             $table->index(['qr_id', 'created_at']);
         });

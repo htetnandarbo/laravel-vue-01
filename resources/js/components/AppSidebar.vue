@@ -5,52 +5,33 @@ import { index as userIndex } from '@/actions/App/Http/Controllers/UserControlle
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, QrCode, Settings2, User } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
+import { LayoutGrid, QrCode, User } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
-const page = usePage<any>();
-const currentUrl = page.url;
 const dashboardMenu = [
     {
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
     },
+    {
+        title: 'Users',
+        href: userIndex(),
+        icon: User,
+    },
+    {
+        title: 'QR',
+        href: '/admin/qrs',
+        icon: QrCode,
+    },
+    {
+        title: 'QR Generator',
+        href: '/admin/qr-batches/history',
+        icon: QrCode,
+    }
 ];
 
-const setup = computed(() => [
-    {
-        title: 'Setups',
-        icon: Settings2,
-        isActive: [userIndex().url, '/admin/qrs', '/admin/qr-batches'].some((url) =>
-            currentUrl.startsWith(url),
-        ),
-        items: [
-            {
-                title: 'Users',
-                href: userIndex(),
-                icon: User,
-            },
-            {
-                title: 'QR Manager',
-                href: '/admin/qrs',
-                icon: QrCode,
-            },
-            {
-                title: 'QR Batches',
-                href: '/admin/qr-batches',
-                icon: QrCode,
-            },
-            {
-                title: 'Generated QRs',
-                href: '/admin/qr-batches/history',
-                icon: QrCode,
-            },
-        ],
-    },
-]);
 </script>
 
 <template>
@@ -68,7 +49,7 @@ const setup = computed(() => [
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="setup" :dashboardMenu="dashboardMenu" />
+            <NavMain :dashboardMenu="dashboardMenu" />
         </SidebarContent>
 
     <SidebarFooter>

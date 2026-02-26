@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { toast } from 'vue-sonner';
 import { reactive, ref, watch } from 'vue';
+import { Link } from '@inertiajs/vue3';
+import { ArrowLeft } from 'lucide-vue-next';
 
 type Defaults = {
     size_mode: 'preset' | 'custom';
@@ -116,6 +118,11 @@ const submit = async () => {
 
 <template>
     <AppLayout>
+        <div class="ms-5 mt-2">
+            <Link :href="'/admin/qr-batches'">
+                <Button variant="link" class="h-fit cursor-pointer gap-1 !p-0"> <ArrowLeft class="size-4" /> <span>Back</span></Button>
+            </Link>
+        </div>
         <div class="m-5 grid max-w-4xl gap-5">
             <Card>
                 <CardHeader>

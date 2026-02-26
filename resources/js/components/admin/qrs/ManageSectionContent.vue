@@ -380,8 +380,6 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                         <TableHeader class="border-none bg-gray-100">
                             <TableRow class="border-none">
                                 <TableHead class="h-fit rounded-l-full py-3">No.</TableHead>
-                                <TableHead class="h-fit py-3">Status</TableHead>
-                                <TableHead class="h-fit py-3">User</TableHead>
                                 <TableHead class="h-fit py-3">Preview</TableHead>
                                 <TableHead class="h-fit py-3">Created</TableHead>
                                 <TableHead class="h-fit rounded-r-full py-3">Action</TableHead>
@@ -390,8 +388,6 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                         <TableBody>
                             <TableRow v-for="(r, index) in pagedRows(qr.responses)" :key="r.id">
                                 <TableCell class="h-fit rounded-l-full py-2">{{ Number(index) + 1 }}</TableCell>
-                                <TableCell class="h-fit py-2">{{ r.status }}</TableCell>
-                                <TableCell class="h-fit py-2">{{ r.user_identifier || '-' }}</TableCell>
                                 <TableCell class="h-fit py-2">
                                     <div class="max-w-md space-y-1 text-xs text-muted-foreground">
                                         <div v-for="(a, idx) in r.answers_preview.slice(0, 2)" :key="`${r.id}-${idx}`">
@@ -403,8 +399,6 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                                 <TableCell class="h-fit rounded-r-full py-2">
                                     <div class="flex flex-wrap items-center gap-2">
                                         <Link :href="`/admin/responses/${r.id}`" class="text-sm text-amber-600 hover:underline">View</Link>
-                                        <Button type="button" variant="outline" size="sm" class="h-7 text-xs" @click="setResponseStatus(r.id, 'accepted')">Accept</Button>
-                                        <Button type="button" variant="outline" size="sm" class="h-7 text-xs" @click="setResponseStatus(r.id, 'rejected')">Reject</Button>
                                     </div>
                                 </TableCell>
                             </TableRow>
@@ -438,9 +432,27 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                                 <TableCell class="h-fit py-2 whitespace-nowrap">{{ wish.created_at || '-' }}</TableCell>
                                 <TableCell class="h-fit rounded-r-full py-2">
                                     <div class="flex flex-wrap gap-2">
-                                        <Button type="button" variant="outline" size="sm" class="h-7 text-xs" @click="setWishStatus(wish.id, 'seen')">Seen</Button>
-                                        <Button type="button" variant="outline" size="sm" class="h-7 text-xs" @click="setWishStatus(wish.id, 'done')">Done</Button>
-                                        <Button type="button" variant="outline" size="sm" class="h-7 text-xs" @click="setWishStatus(wish.id, 'new')">Reset</Button>
+                                        <template v-if="wish.status === 'pending'">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                class="h-7 text-xs text-emerald-700"
+                                                @click="setWishStatus(wish.id, 'accepted')"
+                                            >
+                                                Accept
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                class="h-7 text-xs text-red-700"
+                                                @click="setWishStatus(wish.id, 'rejected')"
+                                            >
+                                                Reject
+                                            </Button>
+                                        </template>
+                                        <span v-else class="text-xs text-muted-foreground">Reviewed</span>
                                     </div>
                                 </TableCell>
                             </TableRow>
