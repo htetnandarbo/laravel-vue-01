@@ -54,4 +54,18 @@ class QrPinController extends Controller
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
+
+    public function checkPin(string $qr, string $pin)
+    {
+        $qr = Qr::where('token', $qr)->first();
+        $pin = $qr->pins()->where('is_used', false)->where('pin_number', $pin)->first();
+
+        if ($pin) {
+            $pin->update(['is_used' => true]);
+        }
+        
+        return response()->json([
+            'exists' => $pin !== null,
+        ]);
+    }
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BasicSearch from '@/components/BasicSearch.vue';
 import Paginator from '@/components/Paginator.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +33,7 @@ defineProps<{
         data: BatchRow[];
         meta: PaginationMeta;
     };
+    search?: string;
 }>();
 </script>
 
@@ -49,6 +51,7 @@ defineProps<{
                     </Button>
                 </CardHeader>
                 <CardContent class="grid gap-4">
+                    <BasicSearch url="/admin/qr-batches/history" :q="search ?? ''" placeholder="Search generated QRs..." />
                     <Table>
                         <TableHeader class="border-none bg-gray-100">
                             <TableRow class="border-none">

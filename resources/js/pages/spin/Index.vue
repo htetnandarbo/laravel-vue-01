@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type Component } from 'vue';
 
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,10 @@ import Input from '@/components/ui/input/Input.vue';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { demo as thanksDemo } from '@/routes/thanks';
 import { Gift, Trophy } from 'lucide-vue-next';
+import QrPinController from '@/actions/App/Http/Controllers/Admin/QrPinController';
+import { toast, Toaster } from 'vue-sonner';
+import axios from 'axios';
+import ItemController from '@/actions/App/Http/Controllers/ItemController';
 
 type PrizeRow = {
     id: number;
@@ -34,6 +38,7 @@ onBeforeUnmount(() => {
 });
 
 type PrizeSegment = {
+    id: string | number | null;
     label: string;
     wheelLabel: string;
     color: string;
@@ -52,6 +57,7 @@ const prizeSegments = computed<PrizeSegment[]>(() => {
     if (rows.length === 0) {
         return [
             {
+                id: null,
                 label: 'No Prize Items',
                 wheelLabel: 'No Prize',
                 color: '#e5e7eb',
@@ -62,6 +68,7 @@ const prizeSegments = computed<PrizeSegment[]>(() => {
     }
 
     return rows.map((prize, index) => ({
+        id: prize.id,
         label: prize.name,
         wheelLabel: prize.name,
         color: prize.color || prizePalette[index % prizePalette.length],
@@ -150,33 +157,51 @@ const spinWheel = () => {
     }, spinDurationMs);
 };
 
+const inputPin = ref('');
+const isPinRight = ref(false);
+
 // Confirm PIN code and start spinning
 const confirmPinCode = () => {
-    digitCodeModalOpen.value = false;
+    const qrToken = String(props.qrToken ?? '').trim();
+    const pin = inputPin.value.trim();
 
-    if (!digitCodeModalOpen.value) {
-        // In a real app, validate the PIN code here before allowing the spin.
-        // For this demo, we'll just proceed to spin the wheel.
-        spinWheel();
+    if (!qrToken) {
+        toast.error('QR token is missing');
+        return;
     }
+
+    if (!pin) {
+        toast.error('Please enter PIN code');
+        return;
+    }
+
+    axios
+        .get(QrPinController.checkPin({ qr: qrToken, pin }).url)
+        .then((response) => {
+            isPinRight.value = !!response.data?.exists;
+
+            if (isPinRight.value) {
+                digitCodeModalOpen.value = false;
+                toast.success('PIN code is correct');
+                spinWheel();
+                return;
+            }
+
+            inputPin.value = '';
+            digitCodeModalOpen.value = true;
+            toast.error('PIN code is incorrect');
+        })
+        .catch((error) => {
+            console.error(error);
+            toast.error('Failed to verify PIN code');
+        });
 };
+
 
 // Handle next action after showing prize result
 const handleResultNext = () => {
-    if (selectedPrize.value) {
-        localStorage.setItem(
-            'wishinluck:last-prize',
-            JSON.stringify({
-                label: selectedPrize.value.label,
-                color: selectedPrize.value.color,
-                imageUrl: selectedPrize.value.imageUrl ?? null,
-            }),
-        );
-    }
-
-    showScrollTutorial.value = false;
-    resultModalOpen.value = false;
-    router.visit(props.qrToken ? thanksDemo({ query: { qr: props.qrToken } }) : thanksDemo());
+    console.log(selectedPrize.value);
+    useForm({}).submit(ItemController.stockUpdate({ token: props.qrToken ?? '', id: selectedPrize.value?.id ?? '' }));
 };
 
 
@@ -228,6 +253,7 @@ onBeforeUnmount(() => {
 
 <template>
     <Head title="Spin Wheel Demo" />
+    <Toaster rich-colors position="top-right" />
 
     <div class="min-h-screen bg-linear-to-b from-amber-100 via-orange-50 to-rose-50 px-4 py-6 sm:px-6 sm:py-10">
         <div class="mx-auto w-full max-w-5xl">
@@ -302,6 +328,7 @@ onBeforeUnmount(() => {
                 <div>
                     <!-- PIN Input  -->
                     <Input
+                        v-model="inputPin"
                         id="pin-code-input"
                         type="text"
                         maxlength="6"
@@ -354,7 +381,6 @@ onBeforeUnmount(() => {
                 </div>
 
                 <DialogFooter class="gap-2">
-                    <Button type="button" variant="outline" class="w-full sm:w-auto" @click="resultModalOpen = false">Close</Button>
                     <Button
                         type="button"
                         class="w-full cursor-pointer bg-amber-500 text-white hover:bg-amber-600 sm:w-auto"

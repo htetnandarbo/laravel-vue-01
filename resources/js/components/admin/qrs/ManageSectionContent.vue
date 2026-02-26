@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BasicSearch from '@/components/BasicSearch.vue';
 import InputError from '@/components/InputError.vue';
 import Paginator from '@/components/Paginator.vue';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Link, router, useForm } from '@inertiajs/vue3';
-import { reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 
 const props = defineProps<{
     qr: any;
@@ -20,6 +21,7 @@ const props = defineProps<{
 
 const currentTab = props.section;
 const pagedRows = (value: any) => (value && Array.isArray(value.data) ? value.data : []);
+const sectionSearchUrl = computed(() => (typeof window !== 'undefined' ? window.location.pathname : ''));
 
 const qForm = useForm({ label: '', type: 'text', is_required: false, sort_order: 0, options_text: '' });
 const iForm = useForm({ name: '', balance_stock: '0' });
@@ -91,6 +93,14 @@ const prettyValue = (value: string | null) => {
 };
 
 const setChecked = (setter: (value: boolean) => void) => (value: boolean | 'indeterminate') => setter(value === true);
+
+const searchPlaceholderBySection: Record<string, string> = {
+    questions: 'Search questions...',
+    items: 'Search items...',
+    responses: 'Search responses...',
+    wishes: 'Search wishes...',
+    pins: 'Search pins...',
+};
 
 const createQuestion = () =>
     qForm
@@ -215,7 +225,7 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                         <div><Button type="submit" class="bg-amber-500 text-white hover:bg-amber-600">Create</Button></div>
                     </form>
 
-                    
+                    <BasicSearch :url="sectionSearchUrl" :q="String(qr.search ?? '')" :placeholder="searchPlaceholderBySection[currentTab]" />                    
 
                     <Table>
                         <TableHeader class="border-none bg-gray-100">
@@ -296,6 +306,8 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                         </div>
                     </form>
 
+                    <BasicSearch :url="sectionSearchUrl" :q="String(qr.search ?? '')" :placeholder="searchPlaceholderBySection[currentTab]" />
+
                     <Table>
                         <TableHeader class="border-none bg-gray-100">
                             <TableRow class="border-none">
@@ -363,6 +375,7 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                 </div>
 
                 <div v-else-if="currentTab === 'responses'" class="grid gap-3">
+                    <BasicSearch :url="sectionSearchUrl" :q="String(qr.search ?? '')" :placeholder="searchPlaceholderBySection[currentTab]" />
                     <Table>
                         <TableHeader class="border-none bg-gray-100">
                             <TableRow class="border-none">
@@ -404,6 +417,7 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                 </div>
 
                 <div v-else-if="currentTab === 'wishes'" class="grid gap-3">
+                    <BasicSearch :url="sectionSearchUrl" :q="String(qr.search ?? '')" :placeholder="searchPlaceholderBySection[currentTab]" />
                     <Table>
                         <TableHeader class="border-none bg-gray-100">
                             <TableRow class="border-none">
@@ -450,7 +464,9 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                         </div>
                         <div class="flex items-end text-xs text-muted-foreground">Generate unique 6-digit pins for this QR.</div>
                     </form>
-                    <div class="flex justify-end">
+                    <div class="flex justify-between">
+                        <BasicSearch :url="sectionSearchUrl" :q="String(qr.search ?? '')" :placeholder="searchPlaceholderBySection[currentTab]" />
+
                         <Button as-child variant="outline">
                             <a :href="`/admin/qrs/${props.qr.id}/pins/export`">Export Excel (CSV)</a>
                         </Button>

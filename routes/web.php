@@ -87,8 +87,30 @@ Route::get('/thanks-demo', function (Request $request) use ($resolveActiveQrToke
         return $qrRequiredPage();
     }
 
-    return Inertia::render('thanks/Index', ['qrToken' => $token]);
+    $qr = Qr::query()
+        ->where('token', $token)
+        ->where('status', 'active')
+        ->first();
+
+    $itemId = (int) $request->query('item', 0);
+    $item = null;
+
+    if ($qr && $itemId > 0) {
+        $item = $qr->items()->whereKey($itemId)->first();
+    }
+
+    return Inertia::render('thanks/Index', [
+        'qrToken' => $token,
+        'winnerItem' => $item ? [
+            'id' => $item->id,
+            'name' => $item->name,
+            'color' => $item->color,
+            'image' => $item->image ?? null,
+        ] : null,
+    ]);
 })->name('thanks.demo');
+
+Route::get('/check-pin/{qr}/{pin}', [AdminQrPinController::class, 'checkPin'])->name('check-pin');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -98,6 +120,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('questions', QuestionController::class);
 
     Route::resource('items', ItemController::class);
+    Route::post('/items/{token}/{id}/stock', [ItemController::class, 'stockUpdate'])->name('items.stock.update');
 
     Route::get('/admin/qr-batches', [QrBatchPageController::class, 'index'])->name('admin.qr-batches.index');
     Route::get('/admin/qr-batches/history', [QrBatchPageController::class, 'history'])->name('admin.qr-batches.history');

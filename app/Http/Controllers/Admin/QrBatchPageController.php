@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\QrBatch;
 use App\Services\QrBatch\QrBatchSettingsNormalizer;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -28,17 +29,34 @@ class QrBatchPageController extends Controller
         ]);
     }
 
-    public function history(): Response
+    public function history(Request $request): Response
     {
         $this->ensureAdmin();
 
-        $batches = QrBatch::query()
-            ->latest('id')
-            ->paginate(20)
-            ->withQueryString();
+        $search = trim((string) $request->query('search', ''));
+
+        $batchesQuery = QrBatch::query()->latest('id');
+
+        if ($search !== '') {
+            $batchesQuery->where(function ($query) use ($search) {
+                $query
+                    ->where('status', 'like', "%{$search}%")
+                    ->orWhere('base_url', 'like', "%{$search}%")
+                    ->orWhere('status_message', 'like', "%{$search}%");
+
+                if (is_numeric($search)) {
+                    $query
+                        ->orWhere('id', (int) $search)
+                        ->orWhere('size_mm', (float) $search);
+                }
+            });
+        }
+
+        $batches = $batchesQuery->paginate(20)->withQueryString();
 
         return Inertia::render('admin/qr-batches/History', [
             'batches' => $this->paginated($batches, fn (QrBatch $batch) => $this->batchPayload($batch)),
+            'search' => $search,
         ]);
     }
 

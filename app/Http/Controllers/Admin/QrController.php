@@ -9,6 +9,7 @@ use App\Models\Qr;
 use App\Services\QrService;
 use App\Services\StockService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -65,44 +66,65 @@ class QrController extends Controller
         return back();
     }
 
-    public function show(Qr $qr): Response
+    public function show(Request $request, Qr $qr): Response
     {
-        return $this->renderManagePage($qr, 'questions');
+        return $this->renderManagePage($request, $qr, 'questions');
     }
 
-    public function questions(Qr $qr): Response
+    public function questions(Request $request, Qr $qr): Response
     {
-        return $this->renderManagePage($qr, 'questions');
+        return $this->renderManagePage($request, $qr, 'questions');
     }
 
-    public function items(Qr $qr): Response
+    public function items(Request $request, Qr $qr): Response
     {
-        return $this->renderManagePage($qr, 'items');
+        return $this->renderManagePage($request, $qr, 'items');
     }
 
-    public function stock(Qr $qr): Response
+    public function stock(Request $request, Qr $qr): Response
     {
-        return $this->renderManagePage($qr, 'stock');
+        return $this->renderManagePage($request, $qr, 'stock');
     }
 
-    public function responses(Qr $qr): Response
+    public function responses(Request $request, Qr $qr): Response
     {
-        return $this->renderManagePage($qr, 'responses');
+        return $this->renderManagePage($request, $qr, 'responses');
     }
 
-    public function wishes(Qr $qr): Response
+    public function wishes(Request $request, Qr $qr): Response
     {
-        return $this->renderManagePage($qr, 'wishes');
+        return $this->renderManagePage($request, $qr, 'wishes');
     }
 
-    public function pins(Qr $qr): Response
+    public function pins(Request $request, Qr $qr): Response
     {
-        return $this->renderManagePage($qr, 'pins');
+        return $this->renderManagePage($request, $qr, 'pins');
     }
 
-    private function renderManagePage(Qr $qr, string $section): Response
+    private function renderManagePage(Request $request, Qr $qr, string $section): Response
     {
+        $search = trim((string) $request->query('search', ''));
+
         $qr->load(['questions', 'items']);
+
+        if ($search !== '' && $section === 'questions') {
+            $needle = mb_strtolower($search);
+            $qr->setRelation('questions', $qr->questions->filter(function ($question) use ($needle) {
+                $label = mb_strtolower((string) ($question->label ?? $question->question_text ?? ''));
+                $type = mb_strtolower((string) $question->type);
+
+                return str_contains($label, $needle) || str_contains($type, $needle);
+            })->values());
+        }
+
+        if ($search !== '' && $section === 'items') {
+            $needle = mb_strtolower($search);
+            $qr->setRelation('items', $qr->items->filter(function ($item) use ($needle) {
+                return str_contains(mb_strtolower((string) $item->name), $needle)
+                    || str_contains(mb_strtolower((string) ($item->sku ?? '')), $needle)
+                    || str_contains(mb_strtolower((string) ($item->color ?? '')), $needle);
+            })->values());
+        }
 
         $stockTransactions = null;
         $responses = null;
@@ -114,15 +136,45 @@ class QrController extends Controller
         }
 
         if ($section === 'responses') {
-            $responses = $qr->formResponses()->with(['answers.question'])->paginate(20)->withQueryString();
+            $responseQuery = $qr->formResponses()->with(['answers.question']);
+
+            if ($search !== '') {
+                $responseQuery->where(function ($query) use ($search) {
+                    $query
+                        ->where('user_identifier', 'like', "%{$search}%")
+                        ->orWhere('status', 'like', "%{$search}%")
+                        ->orWhere('id', (int) $search)
+                        ->orWhereHas('answers', function ($answerQuery) use ($search) {
+                            $answerQuery->where('value', 'like', "%{$search}%");
+                        });
+                });
+            }
+
+            $responses = $responseQuery->paginate(20)->withQueryString();
         }
 
         if ($section === 'wishes') {
-            $wishes = $qr->wishes()->paginate(20)->withQueryString();
+            $wishQuery = $qr->wishes();
+
+            if ($search !== '') {
+                $wishQuery->where(function ($query) use ($search) {
+                    $query
+                        ->where('message', 'like', "%{$search}%")
+                        ->orWhere('status', 'like', "%{$search}%");
+                });
+            }
+
+            $wishes = $wishQuery->paginate(20)->withQueryString();
         }
 
         if ($section === 'pins') {
-            $pins = $qr->pins()->paginate(50)->withQueryString();
+            $pinQuery = $qr->pins();
+
+            if ($search !== '') {
+                $pinQuery->where('pin_number', 'like', "%{$search}%");
+            }
+
+            $pins = $pinQuery->paginate(50)->withQueryString();
         }
 
         $pageMap = [
@@ -135,7 +187,7 @@ class QrController extends Controller
         ];
 
         return Inertia::render($pageMap[$section] ?? $pageMap['questions'], [
-            'qr' => $this->qrPayload($qr, $stockTransactions, $responses, $wishes, $pins),
+            'qr' => $this->qrPayload($qr, $stockTransactions, $responses, $wishes, $pins, $search),
             'questionTypes' => ['text', 'number', 'textarea', 'select', 'checkbox', 'date'],
         ]);
     }
@@ -146,6 +198,7 @@ class QrController extends Controller
         ?LengthAwarePaginator $responses = null,
         ?LengthAwarePaginator $wishes = null,
         ?LengthAwarePaginator $pins = null,
+        string $search = '',
     ): array
     {
         return [
@@ -154,6 +207,7 @@ class QrController extends Controller
             'name' => $qr->name,
             'status' => $qr->status,
             'created_at' => optional($qr->created_at)->toDateTimeString(),
+            'search' => $search,
             'questions' => $qr->questions->map(fn ($question) => [
                 'id' => $question->id,
                 'label' => $question->label ?? $question->question_text,

@@ -13,14 +13,30 @@ type StoredPrize = {
     imageUrl?: string | null;
 };
 
+type WinnerItem = {
+    id: number;
+    name: string;
+    color?: string | null;
+    image?: string | null;
+};
+
 const prize = ref<StoredPrize>({
     label: 'Mystery Gift',
     color: '#f59e0b',
     imageUrl: null,
 });
-const props = defineProps<{ qrToken?: string | null }>();
+const props = defineProps<{ qrToken?: string | null; winnerItem?: WinnerItem | null }>();
 
 onMounted(() => {
+    if (props.winnerItem?.name) {
+        prize.value = {
+            label: props.winnerItem.name,
+            color: props.winnerItem.color || '#f59e0b',
+            imageUrl: props.winnerItem.image ? `/storage/${props.winnerItem.image}` : null,
+        };
+        return;
+    }
+
     try {
         const raw = localStorage.getItem('wishinluck:last-prize');
         if (!raw) return;
