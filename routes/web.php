@@ -67,7 +67,7 @@ Route::get('/spin-demo', function (Request $request) use ($resolveActiveQrToken,
     $qr = Qr::query()
         ->where('token', $token)
         ->where('status', 'active')
-        ->with('items')
+        ->with(['items' => fn ($query) => $query->where('balance_stock', '>', 0)])
         ->first();
 
     return Inertia::render('spin/Index', [
