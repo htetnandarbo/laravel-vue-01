@@ -18,7 +18,6 @@ class QrBatchSettingsNormalizer
         'S' => 25.0,
         'M' => 30.0,
         'L' => 40.0,
-        'XL' => 50.0,
     ];
 
     private const PAGE_DIMENSIONS_MM = [
@@ -28,11 +27,11 @@ class QrBatchSettingsNormalizer
 
     public function normalize(array $validated): array
     {
-        $pageFormat = strtoupper((string) ($validated['page_format'] ?? self::DEFAULT_PAGE_FORMAT));
-        $marginMm = (float) ($validated['margin_mm'] ?? self::DEFAULT_MARGIN_MM);
-        $gapMm = (float) ($validated['gap_mm'] ?? self::DEFAULT_GAP_MM);
-        $cols = (int) ($validated['cols'] ?? self::DEFAULT_COLS);
-        $rows = (int) ($validated['rows'] ?? self::DEFAULT_ROWS);
+        $pageFormat = self::DEFAULT_PAGE_FORMAT;
+        $marginMm = self::DEFAULT_MARGIN_MM;
+        $gapMm = self::DEFAULT_GAP_MM;
+        $cols = self::DEFAULT_COLS;
+        $rows = self::DEFAULT_ROWS;
         $sizeMode = strtolower((string) ($validated['size_mode'] ?? self::DEFAULT_SIZE_MODE));
         $baseUrl = trim((string) $validated['base_url']);
 
@@ -48,7 +47,7 @@ class QrBatchSettingsNormalizer
         );
 
         return [
-            'quantity' => (int) $validated['quantity'],
+            'quantity' => 1,
             'status' => 'pending',
             'base_url' => $baseUrl,
             'page_format' => $pageFormat,

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\QrBatch;
 use App\Services\QrBatch\QrBatchSettingsNormalizer;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -17,9 +19,44 @@ class QrBatchPageController extends Controller
         $this->ensureAdmin();
 
         return Inertia::render('admin/qr-batches/Index', [
-            'defaults' => QrBatchSettingsNormalizer::defaults(),
+            'defaults' => [
+                'size_mode' => QrBatchSettingsNormalizer::defaults()['size_mode'],
+                'size_preset' => QrBatchSettingsNormalizer::defaults()['size_preset'],
+                'size_mm' => QrBatchSettingsNormalizer::defaults()['size_mm'],
+            ],
             'sizePresets' => QrBatchSettingsNormalizer::SIZE_PRESETS,
             'initialBatch' => $this->latestBatchPayload(),
+        ]);
+    }
+
+    public function history(Request $request): Response
+    {
+        $this->ensureAdmin();
+
+        $search = trim((string) $request->query('search', ''));
+
+        $batchesQuery = QrBatch::query()->latest('id');
+
+        if ($search !== '') {
+            $batchesQuery->where(function ($query) use ($search) {
+                $query
+                    ->where('status', 'like', "%{$search}%")
+                    ->orWhere('base_url', 'like', "%{$search}%")
+                    ->orWhere('status_message', 'like', "%{$search}%");
+
+                if (is_numeric($search)) {
+                    $query
+                        ->orWhere('id', (int) $search)
+                        ->orWhere('size_mm', (float) $search);
+                }
+            });
+        }
+
+        $batches = $batchesQuery->paginate(20)->withQueryString();
+
+        return Inertia::render('admin/qr-batches/History', [
+            'batches' => $this->paginated($batches, fn (QrBatch $batch) => $this->batchPayload($batch)),
+            'search' => $search,
         ]);
     }
 
@@ -36,18 +73,17 @@ class QrBatchPageController extends Controller
             return null;
         }
 
+        return $this->batchPayload($batch);
+    }
+
+    private function batchPayload(QrBatch $batch): array
+    {
         $downloadAvailable = (bool) ($batch->pdf_path && Storage::disk('local')->exists($batch->pdf_path));
 
         return [
             'id' => $batch->id,
-            'quantity' => $batch->quantity,
             'status' => $batch->status,
             'base_url' => $batch->base_url,
-            'page_format' => $batch->page_format,
-            'margin_mm' => $batch->margin_mm,
-            'gap_mm' => $batch->gap_mm,
-            'cols' => $batch->cols,
-            'rows' => $batch->rows,
             'size_mode' => $batch->size_mode,
             'size_mm' => $batch->size_mm,
             'pdf_path' => $batch->pdf_path,
@@ -61,6 +97,25 @@ class QrBatchPageController extends Controller
             'updated_at' => optional($batch->updated_at)->toISOString(),
             'started_at' => optional($batch->started_at)->toISOString(),
             'finished_at' => optional($batch->finished_at)->toISOString(),
+        ];
+    }
+
+    private function paginated(LengthAwarePaginator $paginator, callable $map): array
+    {
+        return [
+            'data' => collect($paginator->items())->map($map)->values()->all(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+                'links' => collect($paginator->linkCollection())->map(fn ($link) => [
+                    'url' => $link['url'],
+                    'label' => $link['label'],
+                    'active' => (bool) $link['active'],
+                ])->values()->all(),
+            ],
         ];
     }
 }

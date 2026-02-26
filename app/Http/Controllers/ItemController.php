@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Models\Qr;
+use App\Models\StockTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -101,5 +103,27 @@ class ItemController extends Controller
         $item->delete();
 
         return redirect()->route('items.index');
+    }
+
+    public function stockUpdate(string $token, string $id)
+    {
+        $qr = Qr::where('token', $token)->firstOrFail();
+        $item = $qr->items()->findOrFail($id);
+
+        $item->update([
+            'balance_stock' => $item->balance_stock - 1,
+        ]);
+
+        $stockTransactions = StockTransaction::create([
+            'qr_id' => $qr->id,
+            'item_id' => $item->id,
+            'quantity' => 1,
+            'type' => 'out',
+        ]);
+
+        return redirect()->route('thanks.demo', [
+            'qr' => $token,
+            'item' => $item->id,
+        ]);
     }
 }

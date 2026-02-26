@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type Component } from 'vue';
 
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,19 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import Input from '@/components/ui/input/Input.vue';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { demo as thanksDemo } from '@/routes/thanks';
-import { Briefcase, Coffee, Gift, Headphones, Package, ShoppingBag, Smartphone, Ticket, Trophy, Umbrella, Watch } from 'lucide-vue-next';
+import { Gift, Trophy } from 'lucide-vue-next';
+import QrPinController from '@/actions/App/Http/Controllers/Admin/QrPinController';
+import { toast, Toaster } from 'vue-sonner';
+import axios from 'axios';
+import ItemController from '@/actions/App/Http/Controllers/ItemController';
+
+type PrizeRow = {
+    id: number;
+    name: string;
+    color?: string | null;
+};
+
+const props = defineProps<{ qrToken?: string | null; prizes?: PrizeRow[] | null }>();
 
 const isMobile = ref(false);
 
@@ -26,6 +38,7 @@ onBeforeUnmount(() => {
 });
 
 type PrizeSegment = {
+    id: string | number | null;
     label: string;
     wheelLabel: string;
     color: string;
@@ -35,56 +48,36 @@ type PrizeSegment = {
     centerAngle?: number;
 };
 
-const prizeSegments: PrizeSegment[] = [
-    {
-        label: 'Umbrella',
-        wheelLabel: 'Umbrella',
-        color: '#f59e0b',
-        textColor: '#451a03',
-        icon: Umbrella,
-        imageUrl: '/demo-prizes/umbrella.png',
-        centerAngle: 0,
-    },
-    {
-        label: 'Shopping Bag',
-        wheelLabel: 'Bag',
-        color: '#fcd34d',
-        textColor: '#78350f',
-        icon: ShoppingBag,
-        imageUrl: '/demo-prizes/shopping-bag.png',
-    },
-    {
-        label: 'Coffee Voucher',
-        wheelLabel: 'Coffee',
-        color: '#fb7185',
-        textColor: '#4c0519',
-        icon: Coffee,
-        imageUrl: '/demo-prizes/coffee-voucher.png',
-    },
-    { label: 'Gift Box', wheelLabel: 'Gift', color: '#c084fc', textColor: '#3b0764', icon: Gift, imageUrl: '/demo-prizes/gift-box.png' },
-    { label: 'Headphones', wheelLabel: 'Audio', color: '#60a5fa', textColor: '#082f49', icon: Headphones, imageUrl: '/demo-prizes/headphones.png' },
-    { label: 'Travel Bag', wheelLabel: 'Travel', color: '#34d399', textColor: '#022c22', icon: Briefcase, imageUrl: '/demo-prizes/travel-bag.png' },
-    {
-        label: 'Smartphone Stand',
-        wheelLabel: 'Stand',
-        color: '#fdba74',
-        textColor: '#431407',
-        icon: Smartphone,
-        imageUrl: '/demo-prizes/smartphone-stand.png',
-    },
-    {
-        label: 'Golden Ticket',
-        wheelLabel: 'Ticket',
-        color: '#f9a8d4',
-        textColor: '#500724',
-        icon: Ticket,
-        imageUrl: '/demo-prizes/golden-ticket.png',
-    },
-    { label: 'Premium Watch', wheelLabel: 'Watch', color: '#93c5fd', textColor: '#172554', icon: Watch, imageUrl: '/demo-prizes/premium-watch.png' },
-    { label: 'Mystery Box', wheelLabel: 'Mystery', color: '#a7f3d0', textColor: '#064e3b', icon: Package, imageUrl: '/demo-prizes/mystery-box.png' },
-];
+const prizePalette = ['#f59e0b', '#fcd34d', '#fb7185', '#c084fc', '#60a5fa', '#34d399', '#fdba74', '#f9a8d4', '#93c5fd', '#a7f3d0'];
+const textPalette = ['#451a03', '#78350f', '#4c0519', '#3b0764', '#082f49', '#022c22', '#431407', '#500724', '#172554', '#064e3b'];
 
-const segmentAngle = 360 / prizeSegments.length;
+const prizeSegments = computed<PrizeSegment[]>(() => {
+    const rows = (props.prizes ?? []).filter((prize) => String(prize.name || '').trim() !== '');
+
+    if (rows.length === 0) {
+        return [
+            {
+                id: null,
+                label: 'No Prize Items',
+                wheelLabel: 'No Prize',
+                color: '#e5e7eb',
+                textColor: '#374151',
+                icon: Gift,
+            },
+        ];
+    }
+
+    return rows.map((prize, index) => ({
+        id: prize.id,
+        label: prize.name,
+        wheelLabel: prize.name,
+        color: prize.color || prizePalette[index % prizePalette.length],
+        textColor: textPalette[index % textPalette.length],
+        icon: Gift,
+    }));
+});
+
+const segmentAngle = computed(() => 360 / Math.max(1, prizeSegments.value.length));
 const wheelRotation = ref(0);
 const isSpinning = ref(false);
 const spinDurationMs = 4200;
@@ -99,9 +92,9 @@ let spinTimeoutId: number | null = null;
 
 const wheelGradient = computed(() => {
     const stops = prizeSegments
-        .map((segment, index) => {
-            const start = index * segmentAngle;
-            const end = start + segmentAngle;
+        .value.map((segment, index) => {
+            const start = index * segmentAngle.value;
+            const end = start + segmentAngle.value;
             return `${segment.color} ${start}deg ${end}deg`;
         })
         .join(', ');
@@ -110,10 +103,10 @@ const wheelGradient = computed(() => {
 });
 
 const numberedPrizeSegments = computed(() =>
-    prizeSegments.map((segment, index) => ({
+    prizeSegments.value.map((segment, index) => ({
         ...segment,
         number: index + 1,
-        centerAngle: index * segmentAngle + segmentAngle / 2,
+        centerAngle: index * segmentAngle.value + segmentAngle.value / 2,
     })),
 );
 
@@ -125,10 +118,10 @@ const normalizedRotation = computed(() => {
 const currentPointerIndex = computed(() => {
     // Pointer is fixed at top while the wheel rotates clockwise.
     const pointerAngleOnWheel = (360 - normalizedRotation.value + 360) % 360;
-    return Math.floor(pointerAngleOnWheel / segmentAngle) % prizeSegments.length;
+    return Math.floor(pointerAngleOnWheel / segmentAngle.value) % prizeSegments.value.length;
 });
 
-const currentPointerPrize = computed(() => prizeSegments[currentPointerIndex.value]);
+const currentPointerPrize = computed(() => prizeSegments.value[currentPointerIndex.value]);
 
 const updateViewportMode = () => {
     isDesktop.value = window.innerWidth >= 640;
@@ -164,43 +157,53 @@ const spinWheel = () => {
     }, spinDurationMs);
 };
 
+const inputPin = ref('');
+const isPinRight = ref(false);
+
 // Confirm PIN code and start spinning
 const confirmPinCode = () => {
-    digitCodeModalOpen.value = false;
+    const qrToken = String(props.qrToken ?? '').trim();
+    const pin = inputPin.value.trim();
 
-    if (!digitCodeModalOpen.value) {
-        // In a real app, validate the PIN code here before allowing the spin.
-        // For this demo, we'll just proceed to spin the wheel.
-        spinWheel();
-    }
-};
-
-// Handle next action after showing prize result
-const handleResultNext = () => {
-    if (selectedPrize.value) {
-        localStorage.setItem(
-            'wishinluck:last-prize',
-            JSON.stringify({
-                label: selectedPrize.value.label,
-                color: selectedPrize.value.color,
-                imageUrl: selectedPrize.value.imageUrl ?? null,
-            }),
-        );
-    }
-
-    showScrollTutorial.value = false;
-    resultModalOpen.value = false;
-    router.visit(thanksDemo());
-};
-
-const setGuideItemRef = (label: string, el: Element | null) => {
-    if (el instanceof HTMLElement) {
-        guideItemRefs.set(label, el);
+    if (!qrToken) {
+        toast.error('QR token is missing');
         return;
     }
 
-    guideItemRefs.delete(label);
+    if (!pin) {
+        toast.error('Please enter PIN code');
+        return;
+    }
+
+    axios
+        .get(QrPinController.checkPin({ qr: qrToken, pin }).url)
+        .then((response) => {
+            isPinRight.value = !!response.data?.exists;
+
+            if (isPinRight.value) {
+                digitCodeModalOpen.value = false;
+                toast.success('PIN code is correct');
+                spinWheel();
+                return;
+            }
+
+            inputPin.value = '';
+            digitCodeModalOpen.value = true;
+            toast.error('PIN code is incorrect');
+        })
+        .catch((error) => {
+            console.error(error);
+            toast.error('Failed to verify PIN code');
+        });
 };
+
+
+// Handle next action after showing prize result
+const handleResultNext = () => {
+    console.log(selectedPrize.value);
+    useForm({}).submit(ItemController.stockUpdate({ token: props.qrToken ?? '', id: selectedPrize.value?.id ?? '' }));
+};
+
 
 const scrollToWinningGiftGuide = async () => {
     if (!selectedPrize.value) return;
@@ -225,7 +228,7 @@ watch(resultModalOpen, async (isOpen, wasOpen) => {
 
     if (wasOpen && !isOpen) {
         // go to next page after closing the result modal
-        router.visit(thanksDemo());
+        router.visit(props.qrToken ? thanksDemo({ query: { qr: props.qrToken } }) : thanksDemo());
     }
 });
 
@@ -250,6 +253,7 @@ onBeforeUnmount(() => {
 
 <template>
     <Head title="Spin Wheel Demo" />
+    <Toaster rich-colors position="top-right" />
 
     <div class="min-h-screen bg-linear-to-b from-amber-100 via-orange-50 to-rose-50 px-4 py-6 sm:px-6 sm:py-10">
         <div class="mx-auto w-full max-w-5xl">
@@ -324,6 +328,7 @@ onBeforeUnmount(() => {
                 <div>
                     <!-- PIN Input  -->
                     <Input
+                        v-model="inputPin"
                         id="pin-code-input"
                         type="text"
                         maxlength="6"
@@ -376,7 +381,6 @@ onBeforeUnmount(() => {
                 </div>
 
                 <DialogFooter class="gap-2">
-                    <Button type="button" variant="outline" class="w-full sm:w-auto" @click="resultModalOpen = false">Close</Button>
                     <Button
                         type="button"
                         class="w-full cursor-pointer bg-amber-500 text-white hover:bg-amber-600 sm:w-auto"

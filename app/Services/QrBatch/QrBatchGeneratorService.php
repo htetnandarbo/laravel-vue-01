@@ -113,6 +113,16 @@ class QrBatchGeneratorService
             $partNumber++;
         }
 
+        if (count($partPaths) === 1) {
+            $this->updateProgress(
+                $batch,
+                self::PROGRESS_SCALE - 1,
+                'Finalizing PDF'
+            );
+
+            return $partPaths[0];
+        }
+
         $this->updateProgress(
             $batch,
             self::TOKEN_STAGE_WEIGHT + self::PDF_STAGE_WEIGHT,

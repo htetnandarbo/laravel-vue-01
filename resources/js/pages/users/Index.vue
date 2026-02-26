@@ -2,10 +2,11 @@
 import { create, edit , destroy } from '@/actions/App/Http/Controllers/UserController';
 
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-import { Edit2, PlusIcon, Trash2 } from 'lucide-vue-next';
+import { EllipsisVerticalIcon, PlusIcon } from 'lucide-vue-next';
 import { Link } from '@inertiajs/vue3';
 
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -49,23 +50,19 @@ defineProps<{
                                     <TableCell class="h-fit py-2">{{ user.email }}</TableCell>
 
                                     <TableCell class="h-fit rounded-r-full py-2">
-                                        <div class="flex gap-2">
-                                            <Link :href="edit(user.id)">
-                                                <Button
-                                                    class="cursor-pointer rounded-full border-amber-400 bg-white text-amber-600 shadow-sm transition-all hover:bg-amber-50 hover:text-amber-700"
-                                                >
-                                                    <Edit2 class="size-4" />
-                                                </Button>
-                                            </Link>
-
-                                          <Link :href="destroy(user.id)">
-                                              <Button
-                                                class="cursor-pointer rounded-full border-red-400 bg-white text-red-600 shadow-sm transition-all hover:bg-red-50 hover:text-red-700"
-                                            >
-                                                <Trash2 class="size-4" />
-                                            </Button>
-                                        </Link>
-                                        </div>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger>
+                                                <EllipsisVerticalIcon class="size-4 cursor-pointer" />
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent>
+                                                <DropdownMenuItem>
+                                                    <Link :href="edit(user.id)">Edit</Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    <Link :href="destroy(user.id)">Delete</Link>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             </TableBody>

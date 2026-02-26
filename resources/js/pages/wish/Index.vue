@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import InputError from '@/components/InputError.vue';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { Head, router, useForm } from '@inertiajs/vue3';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +15,10 @@ const isWishDialogOpen = ref(false);
 const isDesktop = ref(false);
 const wishText = ref('');
 const draftWish = ref('');
+const props = defineProps<{ qrToken?: string | null }>();
+const wishForm = useForm({
+    message: '',
+});
 
 const wishPreview = computed(() => {
     return wishText.value.trim() || 'Wish လေးကို ဖြည့်ပါ';
@@ -31,13 +36,25 @@ const saveWish = () => {
     const cleanWish = draftWish.value.trim();
     if (!cleanWish) return;
 
-    wishText.value = cleanWish;
-    isWishDialogOpen.value = false;
+    if (!props.qrToken) {
+        wishText.value = cleanWish;
+        isWishDialogOpen.value = false;
+        return;
+    }
+
+    wishForm.message = cleanWish;
+    wishForm.post(`/qr/${props.qrToken}/wish`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            wishText.value = cleanWish;
+            isWishDialogOpen.value = false;
+        },
+    });
 };
 
 const nextStep = () => {
     if (!hasWish.value) return;
-    router.visit(spinDemo());
+    router.visit(props.qrToken ? spinDemo({ query: { qr: props.qrToken } }) : spinDemo());
 };
 
 const updateViewportMode = () => {
@@ -110,6 +127,7 @@ onBeforeUnmount(() => {
 
                                 <div class="space-y-3">
                                     <Textarea id="wish-text-desktop" v-model="draftWish" rows="5" maxlength="220" />
+                                    <InputError :message="wishForm.errors.message" />
 
                                     <div class="flex items-center justify-between text-xs">
                                         <p class="text-slate-500">Tip: Specific wishes feel more meaningful in the demo.</p>
@@ -124,10 +142,10 @@ onBeforeUnmount(() => {
                                     <Button
                                         type="button"
                                         class="w-full cursor-pointer bg-amber-500 text-white hover:bg-amber-600 sm:w-auto"
-                                        :disabled="!draftWish.trim()"
+                                        :disabled="!draftWish.trim() || wishForm.processing"
                                         @click="saveWish"
                                     >
-                                        Save Wish
+                                        {{ wishForm.processing ? 'Saving...' : 'Save Wish' }}
                                     </Button>
                                 </DialogFooter>
                             </DialogContent>
@@ -145,6 +163,7 @@ onBeforeUnmount(() => {
 
                                 <div class="space-y-3 px-4">
                                     <Textarea id="wish-text-mobile" v-model="draftWish" rows="5" maxlength="220" />
+                                    <InputError :message="wishForm.errors.message" />
                                 </div>
 
                                 <SheetFooter class="gap-2 px-4 pb-4">
@@ -154,10 +173,10 @@ onBeforeUnmount(() => {
                                     <Button
                                         type="button"
                                         class="w-full cursor-pointer bg-amber-500 text-white hover:bg-amber-600"
-                                        :disabled="!draftWish.trim()"
+                                        :disabled="!draftWish.trim() || wishForm.processing"
                                         @click="saveWish"
                                     >
-                                        Save Wish
+                                        {{ wishForm.processing ? 'Saving...' : 'Save Wish' }}
                                     </Button>
                                 </SheetFooter>
                             </SheetContent>

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreQrBatchRequest;
-use App\Jobs\GenerateQrBatchJob;
 use App\Models\QrBatch;
+use App\Services\QrBatch\QrBatchGeneratorService;
 use App\Services\QrBatch\QrBatchSettingsNormalizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
@@ -16,6 +16,7 @@ class QrBatchController extends Controller
 {
     public function __construct(
         private readonly QrBatchSettingsNormalizer $normalizer,
+        private readonly QrBatchGeneratorService $generator,
     ) {
     }
 
@@ -32,12 +33,12 @@ class QrBatchController extends Controller
             'status_message' => 'Queued',
         ]));
 
-        GenerateQrBatchJob::dispatch($batch->id);
+        $batch = $this->generator->generate($batch);
 
         return response()->json([
-            'message' => 'QR batch queued successfully.',
+            'message' => 'QR generated successfully.',
             'batch' => $this->toApiPayload($batch),
-        ], 202);
+        ]);
     }
 
     public function show(QrBatch $qrBatch): JsonResponse
@@ -76,14 +77,8 @@ class QrBatchController extends Controller
 
         return [
             'id' => $batch->id,
-            'quantity' => $batch->quantity,
             'status' => $batch->status,
             'base_url' => $batch->base_url,
-            'page_format' => $batch->page_format,
-            'margin_mm' => $batch->margin_mm,
-            'gap_mm' => $batch->gap_mm,
-            'cols' => $batch->cols,
-            'rows' => $batch->rows,
             'size_mode' => $batch->size_mode,
             'size_mm' => $batch->size_mm,
             'pdf_path' => $batch->pdf_path,
