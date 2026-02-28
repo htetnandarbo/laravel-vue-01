@@ -11,7 +11,7 @@ defineProps<{
         token: string;
         status: string;
     };
-    section: 'questions' | 'items' | 'stock' | 'responses' | 'wishes' | 'pins';
+    section: 'questions' | 'items' | 'stock' | 'responses' | 'wishes' | 'pins' | 'notification';
 }>();
 
 const navItems = [
@@ -21,6 +21,7 @@ const navItems = [
     { key: 'responses', label: 'Responses' },
     { key: 'wishes', label: 'Wishes' },
     { key: 'pins', label: 'Pins' },
+    { key: 'notification', label: 'Notification' },
 ] as const;
 </script>
 

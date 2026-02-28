@@ -101,6 +101,11 @@ class QrController extends Controller
         return $this->renderManagePage($request, $qr, 'pins');
     }
 
+    public function notification(Request $request, Qr $qr): Response
+    {
+        return $this->renderManagePage($request, $qr, 'notification');
+    }
+
     private function renderManagePage(Request $request, Qr $qr, string $section): Response
     {
         $search = trim((string) $request->query('search', ''));
@@ -184,6 +189,7 @@ class QrController extends Controller
             'responses' => 'admin/Qrs/Responses',
             'wishes' => 'admin/Qrs/Wishes',
             'pins' => 'admin/Qrs/Pins',
+            'notification' => 'admin/Qrs/Notification',
         ];
 
         return Inertia::render($pageMap[$section] ?? $pageMap['questions'], [

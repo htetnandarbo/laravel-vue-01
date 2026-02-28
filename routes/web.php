@@ -144,6 +144,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/qrs/{qr}/responses', [AdminQrController::class, 'responses'])->name('qrs.responses');
     Route::get('/qrs/{qr}/wishes', [AdminQrController::class, 'wishes'])->name('qrs.wishes');
     Route::get('/qrs/{qr}/pins', [AdminQrController::class, 'pins'])->name('qrs.pins');
+    Route::get('/qrs/{qr}/notification', [AdminQrController::class, 'notification'])->name('qrs.notification');
 
     Route::post('/qrs/{qr}/questions', [AdminQrQuestionController::class, 'store'])->name('qrs.questions.store');
     Route::patch('/questions/{question}', [AdminQrQuestionController::class, 'update'])->name('questions.update');

@@ -37,7 +37,7 @@ class WishService
         $prefix = 'data:image/png;base64,';
         if (! str_starts_with($imageData, $prefix)) {
             throw ValidationException::withMessages([
-                'image_data' => 'Invalid image data.',
+                'image' => 'Invalid image data.',
             ]);
         }
 
@@ -45,7 +45,7 @@ class WishService
 
         if ($binary === false) {
             throw ValidationException::withMessages([
-                'image_data' => 'Image encoding is invalid.',
+                'image' => 'Image encoding is invalid.',
             ]);
         }
 

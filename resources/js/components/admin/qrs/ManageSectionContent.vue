@@ -17,7 +17,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 const props = defineProps<{
     qr: any;
     questionTypes: string[];
-    section: 'questions' | 'items' | 'stock' | 'responses' | 'wishes' | 'pins';
+    section: 'questions' | 'items' | 'stock' | 'responses' | 'wishes' | 'pins' | 'notification';
 }>();
 
 const currentTab = props.section;
@@ -101,6 +101,7 @@ const searchPlaceholderBySection: Record<string, string> = {
     responses: 'Search responses...',
     wishes: 'Search wishes...',
     pins: 'Search pins...',
+    notification: 'Search...',
 };
 
 const createQuestion = () =>
@@ -223,7 +224,7 @@ const syncWishExportNotifications = (exports: WishImageExport[]) => {
 };
 
 const loadWishExports = async () => {
-    if (currentTab !== 'wishes') return;
+    if (currentTab !== 'notification') return;
 
     try {
         const response = await fetch(`/admin/qrs/${props.qr.id}/wishes/image-exports`, {
@@ -263,7 +264,7 @@ const queueWishImageExport = async () => {
         const data = await response.json().catch(() => ({}));
 
         if (response.status === 202) {
-            toast.success(data.message || 'Wish image export has been queued.');
+            toast.success(data.message || 'When the process is finished, check on notification.');
             await loadWishExports();
             return;
         }
@@ -277,7 +278,7 @@ const queueWishImageExport = async () => {
 };
 
 onMounted(() => {
-    if (currentTab !== 'wishes') return;
+    if (currentTab !== 'notification') return;
 
     loadWishExports();
 
@@ -521,35 +522,19 @@ onBeforeUnmount(() => {
                 </div>
 
                 <div v-else-if="currentTab === 'wishes'" class="grid gap-3">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex justify-between">
                         <BasicSearch :url="sectionSearchUrl" :q="String(qr.search ?? '')" :placeholder="searchPlaceholderBySection[currentTab]" />
                         <Button
-                            type="button"
-                            variant="outline"
-                            class="whitespace-nowrap"
-                            :disabled="isWishExportQueuing"
-                            @click="queueWishImageExport"
+                                type="button"
+                                variant="outline"
+                                class="whitespace-nowrap"
+                                :disabled="isWishExportQueuing"
+                                @click="queueWishImageExport"
                         >
-                            {{ isWishExportQueuing ? 'Queueing...' : 'Download Images (.zip)' }}
+                            {{ isWishExportQueuing ? 'Queueing...' : 'Zip Images' }}
                         </Button>
                     </div>
 
-                    <div v-if="wishExports.length > 0" class="rounded-lg border p-3">
-                        <p class="mb-2 text-sm font-medium">Recent Image Exports</p>
-                        <div class="space-y-2 text-sm">
-                            <div v-for="exportItem in wishExports.slice(0, 5)" :key="exportItem.id" class="flex flex-wrap items-center justify-between gap-2">
-                                <div class="flex flex-wrap items-center gap-3">
-                                    <span class="font-medium">#{{ exportItem.id }}</span>
-                                    <span class="capitalize text-muted-foreground">{{ exportItem.status }}</span>
-                                    <span v-if="exportItem.total_images > 0">{{ exportItem.total_images }} images</span>
-                                    <span v-if="exportItem.error_message" class="text-red-600">{{ exportItem.error_message }}</span>
-                                </div>
-                                <Button v-if="exportItem.download_available && exportItem.download_url" as-child variant="outline" size="sm">
-                                    <a :href="exportItem.download_url">Download ZIP</a>
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
                     <Table>
                         <TableHeader class="border-none bg-gray-100">
                             <TableRow class="border-none">
@@ -611,6 +596,29 @@ onBeforeUnmount(() => {
                         </TableBody>
                     </Table>
                     <Paginator :meta="qr.wishes?.meta" />
+                </div>
+
+                <div v-else-if="currentTab === 'notification'" class="grid gap-3">
+                    
+
+                    <div v-if="wishExports.length > 0" class="rounded-lg border p-3">
+                        <p class="mb-2 text-sm font-medium">Recent Image Exports</p>
+                        <div class="space-y-2 text-sm">
+                            <div v-for="(exportItem, index) in wishExports.slice(0, 20)" :key="exportItem.id" class="flex flex-wrap items-center justify-between gap-2">
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <span class="font-medium">#{{ Number(index) + 1 }}</span>
+                                    <span class="capitalize text-muted-foreground">{{ exportItem.status }}</span>
+                                    <span v-if="exportItem.total_images > 0">{{ exportItem.total_images }} images</span>
+                                    <span v-if="exportItem.error_message" class="text-red-600">{{ exportItem.error_message }}</span>
+                                </div>
+                                <Button v-if="exportItem.download_available && exportItem.download_url" as-child variant="outline" size="sm">
+                                    <a :href="exportItem.download_url">Download ZIP</a>
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else class="text-sm text-muted-foreground">No export history yet.</div>
                 </div>
 
                 <div v-else-if="currentTab === 'pins'" class="grid gap-4">

@@ -57,7 +57,7 @@ class WishImageExportController extends Controller
         GenerateWishImagesZip::dispatch($export->id);
 
         return response()->json([
-            'message' => 'Wish image export has been queued.',
+            'message' => 'When the process is finished, check on notification.',
             'export' => $this->toPayload($export),
         ], 202);
     }
