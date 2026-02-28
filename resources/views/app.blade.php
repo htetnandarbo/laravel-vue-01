@@ -6,11 +6,11 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         {{-- Demo mode: force light theme background --}}
-        <style>
+        <!-- <style>
             html {
                 background-color: oklch(1 0 0);
             }
-        </style>
+        </style> -->
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 

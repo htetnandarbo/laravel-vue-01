@@ -13,6 +13,7 @@ return new class extends Migration
             $table->foreignId('qr_id')->constrained('qrs')->cascadeOnDelete();
             $table->text('message');
             $table->string('image')->nullable();
+            $table->boolean('is_downloaded')->default(false);
             $table->enum('status', ['pending', 'accepted', 'rejected'])->default('pending')->index();
             $table->timestamps();
             $table->index(['qr_id', 'created_at']);

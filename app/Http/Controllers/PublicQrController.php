@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PublicSite\SubmitQrFormRequest;
 use App\Http\Requests\PublicSite\SubmitWishRequest;
+use App\Http\Requests\PublicSite\StoreWishCardImageRequest;
 use App\Models\Qr;
 use App\Services\PublicSubmissionService;
 use App\Services\WishService;
@@ -63,9 +64,16 @@ class PublicQrController extends Controller
     {
         $qr = Qr::query()->where('token', $token)->where('status', 'active')->firstOrFail();
 
-        $this->wishService->create($qr, $request->validated());
+        $wish = $this->wishService->create($qr, $request->validated());
 
-        return back()->with('success', 'Wish submitted successfully.');
+        $this->wishService->storeCardImage(
+            $qr,
+            $wish,
+            (string) $request->validated('image'),
+        );
+
+
+        return redirect()->route('spin.demo', ['token' => $token])->with('success', 'Wish submitted successfully.');
     }
 
     private function findActiveQrByToken(string $token): ?Qr

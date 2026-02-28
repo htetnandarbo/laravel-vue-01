@@ -245,6 +245,7 @@ class QrController extends Controller
             'wishes' => $wishes ? $this->paginated($wishes, fn ($wish) => [
                 'id' => $wish->id,
                 'message' => $wish->message,
+                'image' => $wish->image ? '/'.$wish->image : null,
                 'status' => $wish->status,
                 'created_at' => optional($wish->created_at)->toDateTimeString(),
             ]) : null,

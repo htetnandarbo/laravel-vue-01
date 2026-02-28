@@ -1,23 +1,27 @@
 <script setup lang="ts">
 import InputError from '@/components/InputError.vue';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
+import html2canvas from 'html2canvas';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
-import { demo as spinDemo } from '@/routes/spin';
 import { Gift, Sparkles, Star } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
 
 const isWishDialogOpen = ref(false);
 const isDesktop = ref(false);
 const wishText = ref('');
 const draftWish = ref('');
+const wishCardRef = ref<HTMLElement | null>(null);
+const wishCardCaptureRef = ref<HTMLElement | null>(null);
 const props = defineProps<{ qrToken?: string | null }>();
 const wishForm = useForm({
     message: '',
+    image: ''
 });
 
 const wishPreview = computed(() => {
@@ -43,18 +47,39 @@ const saveWish = () => {
     }
 
     wishForm.message = cleanWish;
-    wishForm.post(`/qr/${props.qrToken}/wish`, {
-        preserveScroll: true,
-        onSuccess: () => {
-            wishText.value = cleanWish;
-            isWishDialogOpen.value = false;
-        },
-    });
+    wishText.value = cleanWish;
+    isWishDialogOpen.value = false;
+    // console.log(cleanWish, hasWish.value);
+   
 };
 
 const nextStep = () => {
-    if (!hasWish.value) return;
-    router.visit(props.qrToken ? spinDemo({ query: { qr: props.qrToken } }) : spinDemo());
+    console.log('work');
+    
+
+    if (!hasWish.value){
+        toast.error('Please add your wish to begin.');
+        return;
+    };
+
+    const captureTarget = wishCardCaptureRef.value ?? wishCardRef.value;
+
+
+    html2canvas(captureTarget).then(canvas => {
+        const image = canvas.toDataURL('image/png');
+        if (!props.qrToken || !captureTarget) {
+            return;
+        }
+        wishForm.image = image;
+
+        wishForm.post(`/qr/${props.qrToken}/wish`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            wishText.value = wishForm.message;
+            isWishDialogOpen.value = false;
+        },
+    });
+    })
 };
 
 const updateViewportMode = () => {
@@ -87,6 +112,7 @@ onBeforeUnmount(() => {
                     </CardHeader>
                     <CardContent class="space-y-4">
                         <button
+                            ref="wishCardRef"
                             type="button"
                             class="group relative w-full rounded-3xl border border-dashed border-amber-300 bg-[linear-gradient(135deg,_rgba(255,250,220,0.95),_rgba(255,240,200,0.75)_55%,_rgba(255,255,255,0.98))] p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-amber-400 hover:shadow-md focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none sm:p-6"
                             @click="openWishDialog"
@@ -139,14 +165,26 @@ onBeforeUnmount(() => {
                                     <DialogClose as-child>
                                         <Button type="button" variant="outline" class="w-full sm:w-auto">Cancel</Button>
                                     </DialogClose>
-                                    <Button
-                                        type="button"
-                                        class="w-full cursor-pointer bg-amber-500 text-white hover:bg-amber-600 sm:w-auto"
-                                        :disabled="!draftWish.trim() || wishForm.processing"
-                                        @click="saveWish"
-                                    >
-                                        {{ wishForm.processing ? 'Saving...' : 'Save Wish' }}
-                                    </Button>
+                                    <!-- <DialogClose as-child>
+                                        <Button
+                                            type="button"
+                                            class="w-full cursor-pointer bg-amber-500 text-white hover:bg-amber-600 sm:w-auto"
+                                            :disabled="!draftWish.trim()"
+                                            @click.stop="saveWish"
+                                        >
+                                            Save Wish
+                                        </Button>
+                                    </DialogClose> -->
+                                    <DialogClose as-child>
+                                        <Button
+                                            type="button"
+                                            class="w-full cursor-pointer bg-amber-500 text-white hover:bg-amber-600 sm:w-auto"
+                                            :disabled="!draftWish.trim()"
+                                            @click="saveWish()"
+                                        >
+                                            Save Wish
+                                        </Button>
+                                    </DialogClose>
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
@@ -186,7 +224,7 @@ onBeforeUnmount(() => {
                             <Button
                                 type="button"
                                 class="w-full cursor-pointer rounded-xl bg-amber-500 text-white hover:bg-amber-600 sm:w-auto"
-                                :disabled="!hasWish"
+                                :disabled="!hasWish || wishForm.processing"
                                 @click="nextStep"
                             >
                                 Next
@@ -197,4 +235,41 @@ onBeforeUnmount(() => {
             </div>
         </div>
     </div>
+
+    <Teleport to="body">
+        <div
+            aria-hidden="true"
+            style="position: fixed; left: -10000px; top: 0; width: 720px; pointer-events: none; opacity: 1; z-index: -1;"
+        >
+            <div
+                 ref="wishCardCaptureRef"
+                style="position: relative; width: 100%; border: 2px dashed #fcd34d; border-radius: 24px; padding: 20px; background: linear-gradient(135deg, rgba(255,250,220,0.95), rgba(255,240,200,0.75) 55%, rgba(255,255,255,0.98)); box-shadow: 0 4px 14px rgba(0,0,0,0.06);"
+            >
+            
+
+                <div style="margin-bottom: 14px; display: flex; align-items: center; gap: 8px; color: #b45309;">
+                    <span style="font-size: 14px;">✦</span>
+                    <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;">Wish Card</span>
+                </div>
+
+                <p
+                    :style="{
+                        minHeight: '88px',
+                        margin: '0',
+                        fontSize: '18px',
+                        lineHeight: '1.6',
+                        color: hasWish ? '#0f172a' : '#64748b',
+                        fontStyle: hasWish ? 'normal' : 'italic',
+                        fontWeight: hasWish ? '600' : '400',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                    }"
+                >
+                    {{ wishPreview }}
+                </p>
+
+                
+            </div>
+        </div>
+    </Teleport>
 </template>

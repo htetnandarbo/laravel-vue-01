@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\QrQuestionController as AdminQrQuestionController
 use App\Http\Controllers\Admin\QrBatchPageController;
 use App\Http\Controllers\Admin\StockTransactionController as AdminStockTransactionController;
 use App\Http\Controllers\Admin\WishController as AdminWishController;
+use App\Http\Controllers\Admin\WishImageExportController as AdminWishImageExportController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\PublicQrController;
 use App\Http\Controllers\QuestionController;
@@ -162,6 +163,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     Route::get('/qrs/{qr}/wishes-legacy', [AdminWishController::class, 'index'])->name('qrs.wishes.index');
     Route::patch('/wishes/{wish}', [AdminWishController::class, 'update'])->name('wishes.update');
+    Route::get('/qrs/{qr}/wishes/image-exports', [AdminWishImageExportController::class, 'index'])->name('qrs.wishes.image-exports.index');
+    Route::post('/qrs/{qr}/wishes/image-exports', [AdminWishImageExportController::class, 'store'])->name('qrs.wishes.image-exports.store');
+    Route::get('/wish-image-exports/{wishImageExport}/download', [AdminWishImageExportController::class, 'download'])->name('wish-image-exports.download');
 });
 
 Route::get('/qr', [PublicQrController::class, 'entry'])->name('public.qr.entry');
@@ -169,6 +173,7 @@ Route::get('/qr={token}', fn (string $token) => redirect()->route('public.qr.ent
 Route::get('/qr/{token}', [PublicQrController::class, 'show'])->name('public.qr.show');
 Route::post('/qr/{token}/submit', [PublicQrController::class, 'submit'])->name('public.qr.submit');
 Route::post('/qr/{token}/wish', [PublicQrController::class, 'wish'])->name('public.qr.wish');
+Route::post('/qr/{token}/wish-card-image', [PublicQrController::class, 'storeWishCardImage'])->name('public.qr.wish-card-image');
 
 
 

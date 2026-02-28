@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Link, router, useForm } from '@inertiajs/vue3';
-import { computed, reactive, ref, watch } from 'vue';
+import { toast } from 'vue-sonner';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 
 const props = defineProps<{
     qr: any;
@@ -182,6 +183,115 @@ const generatePins = () =>
 
 const setResponseStatus = (id: number, status: string) => router.patch(`/admin/responses/${id}`, { status }, { preserveScroll: true });
 const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishes/${id}`, { status }, { preserveScroll: true });
+
+type WishImageExport = {
+    id: number;
+    status: 'queued' | 'processing' | 'completed' | 'failed';
+    total_images: number;
+    error_message: string | null;
+    download_available: boolean;
+    download_url: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+    started_at: string | null;
+    finished_at: string | null;
+};
+
+const wishExports = ref<WishImageExport[]>([]);
+const isWishExportQueuing = ref(false);
+let wishExportPollTimer: number | null = null;
+const previousExportStatuses = new Map<number, WishImageExport['status']>();
+
+const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+
+const syncWishExportNotifications = (exports: WishImageExport[]) => {
+    for (const exportItem of exports) {
+        const previousStatus = previousExportStatuses.get(exportItem.id);
+
+        if (previousStatus && previousStatus !== exportItem.status) {
+            if (exportItem.status === 'completed') {
+                toast.success(`Wish image ZIP is ready (${exportItem.total_images} images).`);
+            }
+
+            if (exportItem.status === 'failed') {
+                toast.error(exportItem.error_message || 'Wish image export failed.');
+            }
+        }
+
+        previousExportStatuses.set(exportItem.id, exportItem.status);
+    }
+};
+
+const loadWishExports = async () => {
+    if (currentTab !== 'wishes') return;
+
+    try {
+        const response = await fetch(`/admin/qrs/${props.qr.id}/wishes/image-exports`, {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json().catch(() => ({}));
+        const exports = Array.isArray(data.exports) ? (data.exports as WishImageExport[]) : [];
+
+        syncWishExportNotifications(exports);
+        wishExports.value = exports;
+    } catch {
+        // Silent polling failure.
+    }
+};
+
+const queueWishImageExport = async () => {
+    if (isWishExportQueuing.value) return;
+
+    isWishExportQueuing.value = true;
+
+    try {
+        const response = await fetch(`/admin/qrs/${props.qr.id}/wishes/image-exports`, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken(),
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({}),
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (response.status === 202) {
+            toast.success(data.message || 'Wish image export has been queued.');
+            await loadWishExports();
+            return;
+        }
+
+        toast.error(data.message || 'Failed to queue wish image export.');
+    } catch {
+        toast.error('Failed to queue wish image export.');
+    } finally {
+        isWishExportQueuing.value = false;
+    }
+};
+
+onMounted(() => {
+    if (currentTab !== 'wishes') return;
+
+    loadWishExports();
+
+    wishExportPollTimer = window.setInterval(() => {
+        loadWishExports();
+    }, 10000);
+});
+
+onBeforeUnmount(() => {
+    if (wishExportPollTimer !== null) {
+        window.clearInterval(wishExportPollTimer);
+        wishExportPollTimer = null;
+    }
+});
 </script>
 
 <template>
@@ -411,13 +521,42 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                 </div>
 
                 <div v-else-if="currentTab === 'wishes'" class="grid gap-3">
-                    <BasicSearch :url="sectionSearchUrl" :q="String(qr.search ?? '')" :placeholder="searchPlaceholderBySection[currentTab]" />
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <BasicSearch :url="sectionSearchUrl" :q="String(qr.search ?? '')" :placeholder="searchPlaceholderBySection[currentTab]" />
+                        <Button
+                            type="button"
+                            variant="outline"
+                            class="whitespace-nowrap"
+                            :disabled="isWishExportQueuing"
+                            @click="queueWishImageExport"
+                        >
+                            {{ isWishExportQueuing ? 'Queueing...' : 'Download Images (.zip)' }}
+                        </Button>
+                    </div>
+
+                    <div v-if="wishExports.length > 0" class="rounded-lg border p-3">
+                        <p class="mb-2 text-sm font-medium">Recent Image Exports</p>
+                        <div class="space-y-2 text-sm">
+                            <div v-for="exportItem in wishExports.slice(0, 5)" :key="exportItem.id" class="flex flex-wrap items-center justify-between gap-2">
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <span class="font-medium">#{{ exportItem.id }}</span>
+                                    <span class="capitalize text-muted-foreground">{{ exportItem.status }}</span>
+                                    <span v-if="exportItem.total_images > 0">{{ exportItem.total_images }} images</span>
+                                    <span v-if="exportItem.error_message" class="text-red-600">{{ exportItem.error_message }}</span>
+                                </div>
+                                <Button v-if="exportItem.download_available && exportItem.download_url" as-child variant="outline" size="sm">
+                                    <a :href="exportItem.download_url">Download ZIP</a>
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
                     <Table>
                         <TableHeader class="border-none bg-gray-100">
                             <TableRow class="border-none">
                                 <TableHead class="h-fit rounded-l-full py-3">No.</TableHead>
                                 <TableHead class="h-fit py-3">Status</TableHead>
                                 <TableHead class="h-fit py-3">Message</TableHead>
+                                <TableHead class="h-fit py-3">Wish Card</TableHead>
                                 <TableHead class="h-fit py-3">Created</TableHead>
                                 <TableHead class="h-fit rounded-r-full py-3">Action</TableHead>
                             </TableRow>
@@ -426,8 +565,18 @@ const setWishStatus = (id: number, status: string) => router.patch(`/admin/wishe
                             <TableRow v-for="(wish, index) in pagedRows(qr.wishes)" :key="wish.id">
                                 <TableCell class="h-fit rounded-l-full py-2">{{ Number(index) + 1 }}</TableCell>
                                 <TableCell class="h-fit py-2">{{ wish.status }}</TableCell>
+                                <TableCell class="h-fit py-2">{{ wish.message }}</TableCell>
                                 <TableCell class="h-fit py-2">
-                                    <p class="max-w-xl whitespace-pre-wrap text-sm">{{ wish.message }}</p>
+                                    <div v-if="wish.image" class="max-w-xs">
+                                        <a :href="wish.image" target="_blank" rel="noopener noreferrer">
+                                            <img
+                                                :src="wish.image"
+                                                alt="Wish card"
+                                                class="h-20 w-36 rounded-md border object-cover transition hover:opacity-90"
+                                            />
+                                        </a>
+                                    </div>
+                                    <p v-else class="text-xs text-muted-foreground">No image</p>
                                 </TableCell>
                                 <TableCell class="h-fit py-2 whitespace-nowrap">{{ wish.created_at || '-' }}</TableCell>
                                 <TableCell class="h-fit rounded-r-full py-2">

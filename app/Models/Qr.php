@@ -42,4 +42,9 @@ class Qr extends Model
     {
         return $this->hasMany(QrPin::class)->latest('id');
     }
+
+    public function wishImageExports()
+    {
+        return $this->hasMany(WishImageExport::class)->latest('id');
+    }
 }

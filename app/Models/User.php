@@ -42,4 +42,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function wishImageExports()
+    {
+        return $this->hasMany(WishImageExport::class)->latest('id');
+    }
 }
