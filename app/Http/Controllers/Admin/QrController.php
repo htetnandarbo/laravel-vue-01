@@ -10,6 +10,8 @@ use App\Services\QrService;
 use App\Services\StockService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -251,7 +253,7 @@ class QrController extends Controller
             'wishes' => $wishes ? $this->paginated($wishes, fn ($wish) => [
                 'id' => $wish->id,
                 'message' => $wish->message,
-                'image' => $wish->image ? '/'.$wish->image : null,
+                'image' => $wish->image ? $this->resolveWishImageUrl((string) $wish->image) : null,
                 'status' => $wish->status,
                 'created_at' => optional($wish->created_at)->toDateTimeString(),
             ]) : null,
@@ -281,5 +283,20 @@ class QrController extends Controller
                 ])->values()->all(),
             ],
         ];
+    }
+
+    private function resolveWishImageUrl(string $imagePath): string
+    {
+        if (Str::startsWith($imagePath, ['http://', 'https://'])) {
+            return $imagePath;
+        }
+
+        $normalized = ltrim($imagePath, '/\\');
+
+        if (is_file(public_path($normalized))) {
+            return '/'.$normalized;
+        }
+
+        return Storage::disk('idrive')->url($normalized);
     }
 }

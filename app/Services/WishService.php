@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Qr;
 use App\Models\Wish;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -49,9 +49,6 @@ class WishService
             ]);
         }
 
-        $directory = public_path('wish-cards');
-        File::ensureDirectoryExists($directory);
-
         $filename = sprintf(
             'wish-qr%s-%s-%s.png',
             $qr->id,
@@ -59,11 +56,18 @@ class WishService
             Str::lower(Str::random(8))
         );
 
-        File::put($directory.DIRECTORY_SEPARATOR.$filename, $binary);
+        $path = 'wish-cards/'.$filename;
+        $stored = Storage::disk('idrive')->put($path, $binary);
+
+        if (! $stored) {
+            throw ValidationException::withMessages([
+                'image' => 'Failed to store image.',
+            ]);
+        }
 
         if ($wish) {
             $wish->update([
-                'image' => 'wish-cards/'.$filename,
+                'image' => $path,
             ]);
         }
 

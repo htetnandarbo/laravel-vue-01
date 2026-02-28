@@ -10,8 +10,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 use ZipArchive;
@@ -76,19 +76,10 @@ class GenerateWishImagesZip implements ShouldQueue
                     $processedIds = [];
 
                     foreach ($wishes as $wish) {
-                        $sourcePath = $this->resolveSourcePath((string) $wish->image);
-
-                        if (! $sourcePath) {
-                            continue;
+                        if ($this->addWishImageToZip($wish, $zip)) {
+                            $processedIds[] = $wish->id;
+                            $included++;
                         }
-
-                        $zip->addFile(
-                            $sourcePath,
-                            sprintf('wish-%d-%s', $wish->id, basename($sourcePath))
-                        );
-
-                        $processedIds[] = $wish->id;
-                        $included++;
                     }
 
                     if ($processedIds !== []) {
@@ -141,26 +132,61 @@ class GenerateWishImagesZip implements ShouldQueue
         }
     }
 
-    private function resolveSourcePath(string $storedPath): ?string
+    private function addWishImageToZip(Wish $wish, ZipArchive $zip): bool
     {
-        $normalized = ltrim($storedPath, '/\\');
+        $normalized = $this->normalizeStoredPath((string) $wish->image);
 
         if ($normalized === '') {
-            return null;
+            return false;
         }
 
-        $candidates = [
+        $archiveName = sprintf('wish-%d-%s', $wish->id, basename($normalized));
+
+        $localCandidates = [
             public_path($normalized),
             storage_path('app/public/'.$normalized),
             storage_path('app/'.$normalized),
         ];
 
-        foreach ($candidates as $candidate) {
-            if (File::exists($candidate) && File::isFile($candidate)) {
-                return $candidate;
+        foreach ($localCandidates as $candidate) {
+            if (is_file($candidate)) {
+                return $zip->addFile($candidate, $archiveName);
             }
         }
 
-        return null;
+        if (Storage::disk('idrive')->exists($normalized)) {
+            $contents = Storage::disk('idrive')->get($normalized);
+            if ($contents !== null && $contents !== false) {
+                return $zip->addFromString($archiveName, $contents);
+            }
+        }
+
+        return false;
+    }
+
+    private function normalizeStoredPath(string $storedPath): string
+    {
+        $raw = trim($storedPath);
+        if ($raw === '') {
+            return '';
+        }
+
+        if (! Str::startsWith($raw, ['http://', 'https://'])) {
+            return ltrim($raw, '/\\');
+        }
+
+        $path = (string) parse_url($raw, PHP_URL_PATH);
+        $path = ltrim($path, '/\\');
+
+        if ($path === '') {
+            return '';
+        }
+
+        $bucket = trim((string) config('filesystems.disks.idrive.bucket'));
+        if ($bucket !== '' && Str::startsWith($path, $bucket.'/')) {
+            $path = Str::after($path, $bucket.'/');
+        }
+
+        return $path;
     }
 }
