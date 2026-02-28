@@ -60,6 +60,18 @@ return [
             'report' => false,
         ],
 
+        'idrive' => [
+            'driver' => 's3',
+            'key' => env('IDRIVE_ACCESS_KEY_ID'),
+            'secret' => env('IDRIVE_SECRET_ACCESS_KEY'),
+            'region' => env('IDRIVE_DEFAULT_REGION'),
+            'bucket' => env('IDRIVE_BUCKET'),
+            'version' => env('IDRIVE_VERSION'),
+            'endpoint' => env('IDRIVE_ENDPOINT'),
+            'use_path_style_endpoint' => true,
+            'url' => env('IDRIVE_PUBLIC_URL'), // Optional for custom domain
+        ]
+
     ],
 
     /*
